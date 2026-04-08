@@ -1612,17 +1612,6 @@ export const createProjectsRouter = (getWindow: () => BrowserWindow | null) => {
 				return { success: true, terminalWarning };
 			}),
 
-		linkToNeon: publicProcedure
-			.input(z.object({ id: z.string(), neonProjectId: z.string() }))
-			.mutation(({ input }) => {
-				localDb
-					.update(projects)
-					.set({ neonProjectId: input.neonProjectId })
-					.where(eq(projects.id, input.id))
-					.run();
-				return { success: true };
-			}),
-
 		getGitHubAvatar: publicProcedure
 			.input(z.object({ id: z.string() }))
 			.query(async ({ input }) => {
