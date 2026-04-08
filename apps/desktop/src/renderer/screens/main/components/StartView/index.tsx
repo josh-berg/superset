@@ -4,7 +4,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { LuFolderOpen, LuPlus, LuX } from "react-icons/lu";
 import { useOpenProject } from "renderer/react-query/projects";
-import { SupersetLogo } from "renderer/routes/sign-in/components/SupersetLogo";
+import { SupersetLogo } from "renderer/components/SupersetLogo";
 
 export function StartView() {
 	const navigate = useNavigate();

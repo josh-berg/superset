@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { PostHogUserIdentifier } from "renderer/components/PostHogUserIdentifier";
 import { TelemetrySync } from "renderer/components/TelemetrySync";
 import { ThemedToaster } from "renderer/components/ThemedToaster";
-import { AuthProvider } from "renderer/providers/AuthProvider";
 import { ElectronTRPCProvider } from "renderer/providers/ElectronTRPCProvider";
 import { PostHogProvider } from "renderer/providers/PostHogProvider";
 
@@ -13,11 +12,9 @@ export function RootLayout({ children }: { children: ReactNode }) {
 			<ElectronTRPCProvider>
 				<PostHogUserIdentifier />
 				<TelemetrySync />
-				<AuthProvider>
-					{children}
-					<ThemedToaster />
-					<Alerter />
-				</AuthProvider>
+				{children}
+				<ThemedToaster />
+				<Alerter />
 			</ElectronTRPCProvider>
 		</PostHogProvider>
 	);

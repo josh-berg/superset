@@ -4,8 +4,6 @@ import { env } from "main/env.main";
 import { appState } from "main/lib/app-state";
 import { notificationsEmitter } from "main/lib/notifications/server";
 import { NOTIFICATION_EVENTS } from "shared/constants";
-import { loadToken } from "../auth/utils/auth-functions";
-
 function resolveNotificationIdsFromSession(sessionId: string): {
 	paneId?: string;
 	tabId?: string;
@@ -48,8 +46,6 @@ function handleLifecycleEvent(event: LifecycleEvent): void {
 
 const service = new ChatRuntimeService({
 	headers: async (): Promise<Record<string, string>> => {
-		const { token } = await loadToken();
-		if (token) return { Authorization: `Bearer ${token}` };
 		return {};
 	},
 	apiUrl: env.NEXT_PUBLIC_API_URL,
