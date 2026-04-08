@@ -9,12 +9,10 @@ import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { protectedProcedure } from "../../trpc";
-import { verifyOrgMembership } from "../integration/utils";
 import {
 	requireOrgResourceAccess,
 	requireOrgScopedResource,
 } from "../utils/org-resource-access";
-import { secretsRouter } from "./secrets";
 
 async function getProjectAccess(
 	userId: string,
@@ -83,8 +81,6 @@ async function getScopedProject(organizationId: string, projectId: string) {
 }
 
 export const projectRouter = {
-	secrets: secretsRouter,
-
 	create: protectedProcedure
 		.input(
 			z.object({
@@ -99,7 +95,6 @@ export const projectRouter = {
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			await verifyOrgMembership(ctx.session.user.id, input.organizationId);
 			const githubRepository = input.githubRepositoryId
 				? await getScopedGithubRepository(
 						input.organizationId,
@@ -171,8 +166,7 @@ export const projectRouter = {
 		.input(
 			z.object({ id: z.string().uuid(), organizationId: z.string().uuid() }),
 		)
-		.mutation(async ({ ctx, input }) => {
-			await verifyOrgMembership(ctx.session.user.id, input.organizationId);
+		.mutation(async ({ input }) => {
 			const project = await getScopedProject(input.organizationId, input.id);
 			await dbWs.delete(projects).where(eq(projects.id, project.id));
 			return { success: true };

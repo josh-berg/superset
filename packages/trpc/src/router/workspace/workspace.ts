@@ -11,7 +11,6 @@ import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { protectedProcedure } from "../../trpc";
-import { verifyOrgMembership } from "../integration/utils";
 import { requireOrgScopedResource } from "../utils/org-resource-access";
 
 async function getScopedProject(organizationId: string, projectId: string) {
@@ -71,8 +70,6 @@ export const workspaceRouter = {
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			await verifyOrgMembership(ctx.session.user.id, input.organizationId);
-
 			const result = await dbWs.transaction(async (tx) => {
 				// Upsert project by (organizationId, slug) unique constraint
 				const [upsertedProject] = await tx
@@ -148,7 +145,6 @@ export const workspaceRouter = {
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			await verifyOrgMembership(ctx.session.user.id, input.organizationId);
 			const project = await getScopedProject(
 				input.organizationId,
 				input.projectId,
@@ -171,8 +167,7 @@ export const workspaceRouter = {
 		.input(
 			z.object({ id: z.string().uuid(), organizationId: z.string().uuid() }),
 		)
-		.mutation(async ({ ctx, input }) => {
-			await verifyOrgMembership(ctx.session.user.id, input.organizationId);
+		.mutation(async ({ input }) => {
 			const workspace = await getScopedWorkspace(
 				input.organizationId,
 				input.id,

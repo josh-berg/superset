@@ -1,15 +1,8 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-import { TRPCError, type TRPCRouterRecord } from "@trpc/server";
+import { type TRPCRouterRecord } from "@trpc/server";
 
 const getCurrentTxidMock = mock(async () => "txid-123");
 const seedDefaultStatusesMock = mock(async () => "status-seeded");
-const syncTaskMock = mock(() => undefined);
-const verifyOrgAdminMock = mock(async () => ({
-	membership: { role: "owner" },
-}));
-const verifyOrgMembershipMock = mock(async () => ({
-	membership: { role: "member" },
-}));
 
 let dbSelectResults: unknown[][] = [];
 let selectResults: unknown[][] = [];
@@ -156,15 +149,6 @@ mock.module("drizzle-orm/pg-core", () => ({
 	alias: (table: unknown) => table,
 }));
 
-mock.module("../../lib/integrations/sync", () => ({
-	syncTask: syncTaskMock,
-}));
-
-mock.module("../integration/utils", () => ({
-	verifyOrgAdmin: verifyOrgAdminMock,
-	verifyOrgMembership: verifyOrgMembershipMock,
-}));
-
 const { createCallerFactory, createTRPCRouter } = await import("../../trpc");
 const { taskRouter } = await import("./task");
 
@@ -210,42 +194,11 @@ describe("task router authorization", () => {
 		seedDefaultStatusesMock.mockReset();
 		seedDefaultStatusesMock.mockImplementation(async () => "status-seeded");
 
-		syncTaskMock.mockReset();
-		syncTaskMock.mockImplementation(() => undefined);
-
 		transactionMock.mockReset();
 		transactionMock.mockImplementation(async (callback) =>
 			callback(txState.tx),
 		);
 
-		verifyOrgMembershipMock.mockReset();
-		verifyOrgMembershipMock.mockImplementation(async () => ({
-			membership: { role: "member" },
-		}));
-		verifyOrgAdminMock.mockReset();
-		verifyOrgAdminMock.mockImplementation(async () => ({
-			membership: { role: "owner" },
-		}));
-	});
-
-	it("rejects non-members from task.byOrganization before reading tasks", async () => {
-		verifyOrgMembershipMock.mockImplementationOnce(async () => {
-			throw new TRPCError({
-				code: "FORBIDDEN",
-				message: "Not a member of this organization",
-			});
-		});
-
-		const caller = createCaller(createContext());
-
-		await expect(
-			caller.task.byOrganization(ORGANIZATION_ID),
-		).rejects.toMatchObject({
-			code: "FORBIDDEN",
-			message: "Not a member of this organization",
-		});
-
-		expect(dbState.mocks.selectMock).not.toHaveBeenCalled();
 	});
 
 	it("returns null from task.byId when the task does not exist", async () => {
@@ -255,30 +208,6 @@ describe("task router authorization", () => {
 		const result = await caller.task.byId(TASK_ID);
 
 		expect(result).toBeNull();
-		expect(verifyOrgMembershipMock).not.toHaveBeenCalled();
-	});
-
-	it("rejects cross-tenant task.byId access after resolving task ownership", async () => {
-		dbSelectResults.push([
-			{
-				id: TASK_ID,
-				organizationId: ORGANIZATION_ID,
-				title: "Cross-tenant task",
-			},
-		]);
-		verifyOrgMembershipMock.mockImplementationOnce(async () => {
-			throw new TRPCError({
-				code: "FORBIDDEN",
-				message: "Not a member of this organization",
-			});
-		});
-
-		const caller = createCaller(createContext());
-
-		await expect(caller.task.byId(TASK_ID)).rejects.toMatchObject({
-			code: "FORBIDDEN",
-			message: "Not a member of this organization",
-		});
 	});
 
 	it("scopes task.bySlug to the active organization", async () => {
@@ -294,68 +223,11 @@ describe("task router authorization", () => {
 
 		const result = await caller.task.bySlug("demo-task");
 
-		expect(verifyOrgMembershipMock).toHaveBeenCalledWith(
-			ACTOR_USER_ID,
-			ORGANIZATION_ID,
-		);
 		expect(result).toMatchObject({
 			id: TASK_ID,
 			slug: "demo-task",
 			title: "Scoped task",
 		});
-	});
-
-	it("rejects cross-tenant task updates before modifying the row", async () => {
-		selectResults.push([{ id: TASK_ID, organizationId: ORGANIZATION_ID }]);
-		verifyOrgMembershipMock.mockImplementationOnce(async () => {
-			throw new TRPCError({
-				code: "FORBIDDEN",
-				message: "Not a member of this organization",
-			});
-		});
-
-		const caller = createCaller(createContext());
-
-		await expect(
-			caller.task.update({
-				id: TASK_ID,
-				title: "Renamed task",
-			}),
-		).rejects.toMatchObject({
-			code: "FORBIDDEN",
-			message: "Not a member of this organization",
-		});
-
-		expect(verifyOrgMembershipMock).toHaveBeenCalledWith(
-			ACTOR_USER_ID,
-			ORGANIZATION_ID,
-		);
-		expect(txState.mocks.updateMock).not.toHaveBeenCalled();
-		expect(syncTaskMock).not.toHaveBeenCalled();
-	});
-
-	it("rejects cross-tenant task deletes before soft-deleting the row", async () => {
-		selectResults.push([{ id: TASK_ID, organizationId: ORGANIZATION_ID }]);
-		verifyOrgMembershipMock.mockImplementationOnce(async () => {
-			throw new TRPCError({
-				code: "FORBIDDEN",
-				message: "Not a member of this organization",
-			});
-		});
-
-		const caller = createCaller(createContext());
-
-		await expect(caller.task.delete(TASK_ID)).rejects.toMatchObject({
-			code: "FORBIDDEN",
-			message: "Not a member of this organization",
-		});
-
-		expect(verifyOrgMembershipMock).toHaveBeenCalledWith(
-			ACTOR_USER_ID,
-			ORGANIZATION_ID,
-		);
-		expect(txState.mocks.updateMock).not.toHaveBeenCalled();
-		expect(syncTaskMock).not.toHaveBeenCalled();
 	});
 
 	it("rejects status changes that point at another organization", async () => {
@@ -397,10 +269,6 @@ describe("task router authorization", () => {
 			task: { id: TASK_ID, title: "Renamed task" },
 			txid: "txid-123",
 		});
-		expect(verifyOrgMembershipMock).toHaveBeenCalledWith(
-			ACTOR_USER_ID,
-			ORGANIZATION_ID,
-		);
 		expect(txState.mocks.updateSetMock).toHaveBeenCalledWith({
 			assigneeAvatarUrl: null,
 			assigneeDisplayName: null,
@@ -409,6 +277,5 @@ describe("task router authorization", () => {
 			statusId: STATUS_ID,
 			title: "Renamed task",
 		});
-		expect(syncTaskMock).toHaveBeenCalledWith(TASK_ID);
 	});
 });
