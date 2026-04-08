@@ -9,23 +9,9 @@ interface SessionUser {
 	id: string;
 }
 
-interface SessionRecord {
-	activeOrganizationId?: string | null;
-}
-
 interface SessionResponse {
-	session?: SessionRecord | null;
+	session?: unknown;
 	user: SessionUser;
-}
-
-interface VerifiedApiKey {
-	referenceId?: string | null;
-	metadata?: unknown;
-}
-
-interface VerifyApiKeyResponse {
-	valid: boolean;
-	key: VerifiedApiKey | null;
 }
 
 export interface McpRequestDeps {
@@ -34,9 +20,6 @@ export interface McpRequestDeps {
 		getSession(args: {
 			headers: Headers;
 		}): Promise<SessionResponse | null | undefined>;
-		verifyApiKey(args: {
-			body: { key: string };
-		}): Promise<VerifyApiKeyResponse>;
 	};
 	createServer: typeof createMcpServer;
 	createTransport: () => WebStandardStreamableHTTPServerTransport;
@@ -47,10 +30,6 @@ function getBearerToken(req: Request): string | undefined {
 	const authorization = req.headers.get("authorization");
 	const match = authorization?.match(/^Bearer\s+(.+)$/i);
 	return match?.[1];
-}
-
-export function isApiKeyBearerToken(token: string): boolean {
-	return token.startsWith("sk_live_");
 }
 
 function normalizeApiUrl(apiUrl: string): string {
@@ -78,14 +57,7 @@ function looksLikeJwt(token: string): boolean {
 	return parts.length === 3 && parts.every(Boolean);
 }
 
-function buildSessionAuthInfo(session: SessionResponse): AuthInfo | undefined {
-	const organizationId = session.session?.activeOrganizationId;
-
-	if (!organizationId) {
-		console.error("[mcp/auth] Session missing activeOrganizationId");
-		return undefined;
-	}
-
+function buildSessionAuthInfo(session: SessionResponse): AuthInfo {
 	return {
 		token: "session",
 		clientId: "session",
@@ -93,63 +65,7 @@ function buildSessionAuthInfo(session: SessionResponse): AuthInfo | undefined {
 		extra: {
 			mcpContext: {
 				userId: session.user.id,
-				organizationId,
-			} satisfies McpContext,
-		},
-	};
-}
-
-function parseApiKeyMetadata(
-	metadata: unknown,
-): Record<string, unknown> | null {
-	if (!metadata) {
-		return null;
-	}
-
-	if (typeof metadata === "string") {
-		try {
-			const parsed = JSON.parse(metadata);
-			return parsed && typeof parsed === "object"
-				? (parsed as Record<string, unknown>)
-				: null;
-		} catch (error) {
-			console.error("[mcp/auth] Failed to parse API key metadata:", error);
-			return null;
-		}
-	}
-
-	return typeof metadata === "object"
-		? (metadata as Record<string, unknown>)
-		: null;
-}
-
-function buildApiKeyAuthInfo(apiKey: VerifiedApiKey): AuthInfo | undefined {
-	const userId = apiKey.referenceId;
-
-	if (!userId) {
-		console.error("[mcp/auth] API key missing referenceId");
-		return undefined;
-	}
-
-	const metadata = parseApiKeyMetadata(apiKey.metadata);
-	const organizationId =
-		typeof metadata?.organizationId === "string"
-			? metadata.organizationId
-			: undefined;
-
-	if (!organizationId) {
-		console.error("[mcp/auth] API key missing organizationId in metadata");
-		return undefined;
-	}
-
-	return {
-		token: "api-key",
-		clientId: "api-key",
-		scopes: ["mcp:full"],
-		extra: {
-			mcpContext: {
-				userId,
-				organizationId,
+				organizationId: "mock-org-id",
 			} satisfies McpContext,
 		},
 	};
@@ -196,39 +112,19 @@ export async function verifyToken(
 	const apiUrl = normalizeApiUrl(deps.apiUrl);
 	let oauthVerificationError: unknown;
 
-	if (bearerToken) {
-		if (isApiKeyBearerToken(bearerToken)) {
-			try {
-				const result = await deps.authApi.verifyApiKey({
-					body: { key: bearerToken },
-				});
+	if (bearerToken && looksLikeJwt(bearerToken)) {
+		try {
+			const payload = (await deps.verifyAccessToken(bearerToken, {
+				jwksUrl: `${apiUrl}/api/auth/jwks`,
+				verifyOptions: {
+					issuer: apiUrl,
+					audience: [apiUrl, `${apiUrl}/`],
+				},
+			})) as Record<string, unknown>;
 
-				if (result.valid && result.key) {
-					return buildApiKeyAuthInfo(result.key);
-				}
-			} catch (error) {
-				console.error("[mcp/auth] API key verification failed", {
-					errorName: getSafeAuthErrorName(error),
-				});
-			}
-
-			return undefined;
-		}
-
-		if (looksLikeJwt(bearerToken)) {
-			try {
-				const payload = (await deps.verifyAccessToken(bearerToken, {
-					jwksUrl: `${apiUrl}/api/auth/jwks`,
-					verifyOptions: {
-						issuer: apiUrl,
-						audience: [apiUrl, `${apiUrl}/`],
-					},
-				})) as Record<string, unknown>;
-
-				return buildOAuthAuthInfo(bearerToken, payload);
-			} catch (error) {
-				oauthVerificationError = error;
-			}
+			return buildOAuthAuthInfo(bearerToken, payload);
+		} catch (error) {
+			oauthVerificationError = error;
 		}
 	}
 

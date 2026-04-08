@@ -3,7 +3,6 @@ import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
 import type { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import {
 	handleMcpRequest,
-	isApiKeyBearerToken,
 	type McpRequestDeps,
 	unauthorizedResponse,
 	verifyToken,
@@ -18,13 +17,11 @@ function createRequest(headers?: HeadersInit): Request {
 
 function createDeps(overrides?: Partial<McpRequestDeps>): McpRequestDeps & {
 	sessionSpy: ReturnType<typeof mock>;
-	apiKeySpy: ReturnType<typeof mock>;
 	oauthSpy: ReturnType<typeof mock>;
 	connectSpy: ReturnType<typeof mock>;
 	transportHandleSpy: ReturnType<typeof mock>;
 } {
 	const sessionSpy = mock(async () => null);
-	const apiKeySpy = mock(async () => ({ valid: false, key: null }));
 	const oauthSpy = mock(async () => {
 		throw new Error("invalid token");
 	});
@@ -38,7 +35,6 @@ function createDeps(overrides?: Partial<McpRequestDeps>): McpRequestDeps & {
 		apiUrl: "https://api.superset.sh",
 		authApi: {
 			getSession: sessionSpy,
-			verifyApiKey: apiKeySpy,
 		},
 		createServer: () =>
 			({
@@ -50,7 +46,6 @@ function createDeps(overrides?: Partial<McpRequestDeps>): McpRequestDeps & {
 			}) as unknown as WebStandardStreamableHTTPServerTransport,
 		verifyAccessToken: oauthSpy as McpRequestDeps["verifyAccessToken"],
 		sessionSpy,
-		apiKeySpy,
 		oauthSpy,
 		connectSpy,
 		transportHandleSpy,
@@ -59,71 +54,6 @@ function createDeps(overrides?: Partial<McpRequestDeps>): McpRequestDeps & {
 }
 
 describe("MCP auth flow", () => {
-	it("detects API key bearer tokens by prefix", () => {
-		expect(isApiKeyBearerToken("sk_live_123")).toBe(true);
-		expect(isApiKeyBearerToken("oauth-token")).toBe(false);
-	});
-
-	it("short-circuits invalid API keys without falling through", async () => {
-		const deps = createDeps();
-
-		const authInfo = await verifyToken(
-			createRequest({ authorization: "Bearer sk_live_invalid" }),
-			deps,
-		);
-
-		expect(authInfo).toBeUndefined();
-		expect(deps.apiKeySpy).toHaveBeenCalledTimes(1);
-		expect(deps.oauthSpy).toHaveBeenCalledTimes(0);
-		expect(deps.sessionSpy).toHaveBeenCalledTimes(0);
-	});
-
-	it("accepts case-insensitive bearer auth schemes", async () => {
-		const deps = createDeps();
-
-		const authInfo = await verifyToken(
-			createRequest({ authorization: "bearer sk_live_invalid" }),
-			deps,
-		);
-
-		expect(authInfo).toBeUndefined();
-		expect(deps.apiKeySpy).toHaveBeenCalledTimes(1);
-		expect(deps.oauthSpy).toHaveBeenCalledTimes(0);
-		expect(deps.sessionSpy).toHaveBeenCalledTimes(0);
-	});
-
-	it("accepts valid API keys", async () => {
-		const deps = createDeps({
-			authApi: {
-				getSession: mock(async () => null),
-				verifyApiKey: mock(async () => ({
-					valid: true,
-					key: {
-						userId: "user-1",
-						metadata: JSON.stringify({ organizationId: "org-1" }),
-					},
-				})),
-			},
-		});
-
-		const authInfo = await verifyToken(
-			createRequest({ authorization: "Bearer sk_live_valid" }),
-			deps,
-		);
-
-		expect(authInfo).toEqual({
-			token: "api-key",
-			clientId: "api-key",
-			scopes: ["mcp:full"],
-			extra: {
-				mcpContext: {
-					userId: "user-1",
-					organizationId: "org-1",
-				},
-			},
-		});
-	});
-
 	it("accepts OAuth access tokens before session lookup", async () => {
 		const verifyAccessToken = mock(async () => ({
 			sub: "user-2",
@@ -173,9 +103,8 @@ describe("MCP auth flow", () => {
 			authApi: {
 				getSession: mock(async () => ({
 					user: { id: "user-3" },
-					session: { activeOrganizationId: "org-3" },
+					session: {},
 				})),
-				verifyApiKey: mock(async () => ({ valid: false, key: null })),
 			},
 		});
 
@@ -191,7 +120,7 @@ describe("MCP auth flow", () => {
 			extra: {
 				mcpContext: {
 					userId: "user-3",
-					organizationId: "org-3",
+					organizationId: "mock-org-id",
 				},
 			},
 		});
@@ -203,9 +132,8 @@ describe("MCP auth flow", () => {
 			authApi: {
 				getSession: mock(async () => ({
 					user: { id: "user-3" },
-					session: { activeOrganizationId: "org-3" },
+					session: {},
 				})),
-				verifyApiKey: mock(async () => ({ valid: false, key: null })),
 			},
 		});
 
@@ -221,7 +149,7 @@ describe("MCP auth flow", () => {
 			extra: {
 				mcpContext: {
 					userId: "user-3",
-					organizationId: "org-3",
+					organizationId: "mock-org-id",
 				},
 			},
 		});
@@ -231,7 +159,7 @@ describe("MCP auth flow", () => {
 	it("does not fall back to session auth after a verified JWT is missing required claims", async () => {
 		const sessionSpy = mock(async () => ({
 			user: { id: "user-3" },
-			session: { activeOrganizationId: "org-3" },
+			session: {},
 		}));
 		const verifyAccessToken = mock(async () => ({
 			sub: "user-2",
@@ -239,7 +167,6 @@ describe("MCP auth flow", () => {
 		const deps = createDeps({
 			authApi: {
 				getSession: sessionSpy,
-				verifyApiKey: mock(async () => ({ valid: false, key: null })),
 			},
 			verifyAccessToken,
 		});
@@ -266,10 +193,7 @@ describe("MCP auth flow", () => {
 	it("does not start MCP transport when auth fails", async () => {
 		const deps = createDeps();
 
-		const response = await handleMcpRequest(
-			createRequest({ authorization: "Bearer sk_live_invalid" }),
-			deps,
-		);
+		const response = await handleMcpRequest(createRequest(), deps);
 
 		expect(response.status).toBe(401);
 		expect(deps.connectSpy).toHaveBeenCalledTimes(0);
@@ -281,9 +205,8 @@ describe("MCP auth flow", () => {
 			authApi: {
 				getSession: mock(async () => ({
 					user: { id: "user-4" },
-					session: { activeOrganizationId: "org-4" },
+					session: {},
 				})),
-				verifyApiKey: mock(async () => ({ valid: false, key: null })),
 			},
 		});
 
