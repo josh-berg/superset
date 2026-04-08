@@ -98,10 +98,6 @@ mock.module("@superset/db/client", () => ({
 }));
 
 mock.module("@superset/db/schema", () => ({
-	members: {
-		organizationId: "members.organizationId",
-		userId: "members.userId",
-	},
 	taskStatuses: {
 		id: "task_statuses.id",
 		organizationId: "task_statuses.organizationId",

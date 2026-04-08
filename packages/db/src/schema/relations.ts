@@ -2,8 +2,6 @@ import { relations } from "drizzle-orm";
 
 import {
 	accounts,
-	invitations,
-	members,
 	organizations,
 	sessions,
 	users,
@@ -17,15 +15,12 @@ import {
 	agentCommands,
 	chatSessions,
 	devicePresence,
-	integrationConnections,
 	projects,
 	sandboxImages,
 	secrets,
 	sessionHosts,
-	subscriptions,
 	taskStatuses,
 	tasks,
-	usersSlackUsers,
 	v2Clients,
 	v2Hosts,
 	v2Projects,
@@ -37,11 +32,8 @@ import {
 export const usersRelations = relations(users, ({ many }) => ({
 	sessions: many(sessions),
 	accounts: many(accounts),
-	members: many(members),
-	invitations: many(invitations),
 	createdTasks: many(tasks, { relationName: "creator" }),
 	assignedTasks: many(tasks, { relationName: "assignee" }),
-	connectedIntegrations: many(integrationConnections),
 	githubInstallations: many(githubInstallations),
 	devicePresence: many(devicePresence),
 	v2Hosts: many(v2Hosts),
@@ -67,9 +59,6 @@ export const accountsRelations = relations(accounts, ({ one }) => ({
 }));
 
 export const organizationsRelations = relations(organizations, ({ many }) => ({
-	members: many(members),
-	invitations: many(invitations),
-	subscriptions: many(subscriptions),
 	projects: many(projects),
 	v2Hosts: many(v2Hosts),
 	v2Clients: many(v2Clients),
@@ -81,42 +70,12 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
 	workspaces: many(workspaces),
 	tasks: many(tasks),
 	taskStatuses: many(taskStatuses),
-	integrations: many(integrationConnections),
 	githubInstallations: many(githubInstallations),
 	githubRepositories: many(githubRepositories),
 	githubPullRequests: many(githubPullRequests),
 	devicePresence: many(devicePresence),
 	agentCommands: many(agentCommands),
 	chatSessions: many(chatSessions),
-}));
-
-export const membersRelations = relations(members, ({ one }) => ({
-	organization: one(organizations, {
-		fields: [members.organizationId],
-		references: [organizations.id],
-	}),
-	user: one(users, {
-		fields: [members.userId],
-		references: [users.id],
-	}),
-}));
-
-export const invitationsRelations = relations(invitations, ({ one }) => ({
-	organization: one(organizations, {
-		fields: [invitations.organizationId],
-		references: [organizations.id],
-	}),
-	inviter: one(users, {
-		fields: [invitations.inviterId],
-		references: [users.id],
-	}),
-}));
-
-export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
-	organization: one(organizations, {
-		fields: [subscriptions.referenceId],
-		references: [organizations.id],
-	}),
 }));
 
 export const tasksRelations = relations(tasks, ({ one }) => ({
@@ -148,20 +107,6 @@ export const taskStatusesRelations = relations(
 			references: [organizations.id],
 		}),
 		tasks: many(tasks),
-	}),
-);
-
-export const integrationConnectionsRelations = relations(
-	integrationConnections,
-	({ one }) => ({
-		organization: one(organizations, {
-			fields: [integrationConnections.organizationId],
-			references: [organizations.id],
-		}),
-		connectedBy: one(users, {
-			fields: [integrationConnections.connectedByUserId],
-			references: [users.id],
-		}),
 	}),
 );
 
@@ -239,20 +184,6 @@ export const agentCommandsRelations = relations(agentCommands, ({ one }) => ({
 		relationName: "parentCommand",
 	}),
 }));
-
-export const usersSlackUsersRelations = relations(
-	usersSlackUsers,
-	({ one }) => ({
-		user: one(users, {
-			fields: [usersSlackUsers.userId],
-			references: [users.id],
-		}),
-		organization: one(organizations, {
-			fields: [usersSlackUsers.organizationId],
-			references: [organizations.id],
-		}),
-	}),
-);
 
 export const projectsRelations = relations(projects, ({ one, many }) => ({
 	organization: one(organizations, {

@@ -1,5 +1,5 @@
 import { db, dbWs } from "@superset/db/client";
-import { members, taskStatuses, tasks, users } from "@superset/db/schema";
+import { taskStatuses, tasks, users } from "@superset/db/schema";
 import { seedDefaultStatuses } from "@superset/db/seed-default-statuses";
 import { getCurrentTxid } from "@superset/db/utils";
 import {
@@ -124,41 +124,12 @@ async function getScopedStatusId(
 }
 
 async function getScopedAssigneeId(
-	executor: Executor,
-	organizationId: string,
+	_executor: Executor,
+	_organizationId: string,
 	assigneeId: string | null,
-	message: string,
+	_message: string,
 ) {
-	if (!assigneeId) {
-		return null;
-	}
-
-	const member = await requireOrgScopedResource(
-		async () => {
-			const [member] = await executor
-				.select({
-					organizationId: members.organizationId,
-					userId: members.userId,
-				})
-				.from(members)
-				.where(
-					and(
-						eq(members.organizationId, organizationId),
-						eq(members.userId, assigneeId),
-					),
-				)
-				.limit(1);
-
-			return member ?? null;
-		},
-		{
-			code: "BAD_REQUEST",
-			message,
-			organizationId,
-		},
-	);
-
-	return member.userId;
+	return assigneeId;
 }
 
 export const taskRouter = {

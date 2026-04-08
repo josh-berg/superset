@@ -25,7 +25,6 @@ import {
 	workspaceTypeValues,
 } from "./enums";
 import { githubRepositories } from "./github";
-import type { IntegrationConfig } from "./types";
 import type { WorkspaceConfig } from "./zod";
 
 export const taskStatus = pgEnum("task_status", taskStatusEnumValues);
@@ -159,87 +158,6 @@ export const tasks = pgTable(
 export type InsertTask = typeof tasks.$inferInsert;
 export type SelectTask = typeof tasks.$inferSelect;
 
-// Integration connections for external providers (Linear, GitHub, etc.)
-export const integrationConnections = pgTable(
-	"integration_connections",
-	{
-		id: uuid().primaryKey().defaultRandom(),
-		organizationId: uuid("organization_id")
-			.notNull()
-			.references(() => organizations.id, { onDelete: "cascade" }),
-		connectedByUserId: uuid("connected_by_user_id")
-			.notNull()
-			.references(() => users.id, { onDelete: "cascade" }),
-
-		provider: integrationProvider().notNull(),
-
-		// OAuth tokens
-		accessToken: text("access_token").notNull(),
-		refreshToken: text("refresh_token"),
-		tokenExpiresAt: timestamp("token_expires_at"),
-
-		externalOrgId: text("external_org_id"),
-		externalOrgName: text("external_org_name"),
-
-		config: jsonb().$type<IntegrationConfig>(),
-
-		createdAt: timestamp("created_at").notNull().defaultNow(),
-		updatedAt: timestamp("updated_at")
-			.notNull()
-			.defaultNow()
-			.$onUpdate(() => new Date()),
-	},
-	(table) => [
-		unique("integration_connections_unique").on(
-			table.organizationId,
-			table.provider,
-		),
-		index("integration_connections_org_idx").on(table.organizationId),
-	],
-);
-
-export type InsertIntegrationConnection =
-	typeof integrationConnections.$inferInsert;
-export type SelectIntegrationConnection =
-	typeof integrationConnections.$inferSelect;
-
-// Stripe subscriptions (org-based billing)
-export const subscriptions = pgTable(
-	"subscriptions",
-	{
-		id: uuid().primaryKey().defaultRandom(),
-		plan: text().notNull(),
-		referenceId: uuid("reference_id")
-			.notNull()
-			.references(() => organizations.id, { onDelete: "cascade" }),
-		stripeCustomerId: text("stripe_customer_id"),
-		stripeSubscriptionId: text("stripe_subscription_id"),
-		status: text().default("incomplete").notNull(),
-		periodStart: timestamp("period_start"),
-		periodEnd: timestamp("period_end"),
-		trialStart: timestamp("trial_start"),
-		trialEnd: timestamp("trial_end"),
-		cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
-		cancelAt: timestamp("cancel_at"),
-		canceledAt: timestamp("canceled_at"),
-		endedAt: timestamp("ended_at"),
-		seats: integer(),
-		createdAt: timestamp("created_at").notNull().defaultNow(),
-		updatedAt: timestamp("updated_at")
-			.notNull()
-			.defaultNow()
-			.$onUpdate(() => new Date()),
-	},
-	(table) => [
-		index("subscriptions_reference_id_idx").on(table.referenceId),
-		index("subscriptions_stripe_customer_id_idx").on(table.stripeCustomerId),
-		index("subscriptions_status_idx").on(table.status),
-	],
-);
-
-export type InsertSubscription = typeof subscriptions.$inferInsert;
-export type SelectSubscription = typeof subscriptions.$inferSelect;
-
 // Device presence - tracks online devices for command routing
 export const devicePresence = pgTable(
 	"device_presence",
@@ -317,31 +235,6 @@ export const agentCommands = pgTable(
 
 export type InsertAgentCommand = typeof agentCommands.$inferInsert;
 export type SelectAgentCommand = typeof agentCommands.$inferSelect;
-
-export const usersSlackUsers = pgTable(
-	"users__slack_users",
-	{
-		id: uuid().primaryKey().defaultRandom(),
-		slackUserId: text("slack_user_id").notNull(),
-		teamId: text("team_id").notNull(),
-		userId: uuid("user_id")
-			.notNull()
-			.references(() => users.id, { onDelete: "cascade" }),
-		organizationId: uuid("organization_id")
-			.notNull()
-			.references(() => organizations.id, { onDelete: "cascade" }),
-		modelPreference: text("model_preference"),
-		createdAt: timestamp("created_at").notNull().defaultNow(),
-	},
-	(table) => [
-		unique("users__slack_users_unique").on(table.slackUserId, table.teamId),
-		index("users__slack_users_user_idx").on(table.userId),
-		index("users__slack_users_org_idx").on(table.organizationId),
-	],
-);
-
-export type InsertUsersSlackUsers = typeof usersSlackUsers.$inferInsert;
-export type SelectUsersSlackUsers = typeof usersSlackUsers.$inferSelect;
 
 export const workspaceType = pgEnum("workspace_type", workspaceTypeValues);
 

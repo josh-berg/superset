@@ -9,7 +9,6 @@ import { register as listWorkspaces } from "./devices/list-workspaces";
 import { register as startAgentSession } from "./devices/start-agent-session";
 import { register as switchWorkspace } from "./devices/switch-workspace";
 import { register as updateWorkspace } from "./devices/update-workspace";
-import { register as listMembers } from "./organizations/list-members";
 import { register as createTask } from "./tasks/create-task";
 import { register as deleteTask } from "./tasks/delete-task";
 import { register as getTask } from "./tasks/get-task";
@@ -24,7 +23,6 @@ const allTools = [
 	getTask,
 	deleteTask,
 	listTaskStatuses,
-	listMembers,
 	listDevices,
 	listWorkspaces,
 	listProjects,

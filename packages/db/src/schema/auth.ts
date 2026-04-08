@@ -44,7 +44,6 @@ export const sessions = authSchema.table(
 		userId: uuid("user_id")
 			.notNull()
 			.references(() => users.id, { onDelete: "cascade" }),
-		activeOrganizationId: uuid("active_organization_id"),
 	},
 	(table) => [index("sessions_user_id_idx").on(table.userId)],
 );
@@ -98,67 +97,12 @@ export const organizations = authSchema.table(
 		logo: text("logo"),
 		createdAt: timestamp("created_at").defaultNow().notNull(),
 		metadata: text("metadata"),
-		stripeCustomerId: text("stripe_customer_id"),
-		allowedDomains: text("allowed_domains").array().default([]).notNull(),
 	},
-	(table) => [
-		uniqueIndex("organizations_slug_idx").on(table.slug),
-		index("organizations_allowed_domains_idx").using(
-			"gin",
-			table.allowedDomains,
-		),
-	],
+	(table) => [uniqueIndex("organizations_slug_idx").on(table.slug)],
 );
 
 export type SelectOrganization = typeof organizations.$inferSelect;
 export type InsertOrganization = typeof organizations.$inferInsert;
-
-export const members = authSchema.table(
-	"members",
-	{
-		id: uuid("id").primaryKey().defaultRandom(),
-		organizationId: uuid("organization_id")
-			.notNull()
-			.references(() => organizations.id, { onDelete: "cascade" }),
-		userId: uuid("user_id")
-			.notNull()
-			.references(() => users.id, { onDelete: "cascade" }),
-		role: text("role").default("member").notNull(),
-		createdAt: timestamp("created_at").defaultNow().notNull(),
-	},
-	(table) => [
-		index("members_organization_id_idx").on(table.organizationId),
-		index("members_user_id_idx").on(table.userId),
-	],
-);
-
-export type SelectMember = typeof members.$inferSelect;
-export type InsertMember = typeof members.$inferInsert;
-
-export const invitations = authSchema.table(
-	"invitations",
-	{
-		id: uuid("id").primaryKey().defaultRandom(),
-		organizationId: uuid("organization_id")
-			.notNull()
-			.references(() => organizations.id, { onDelete: "cascade" }),
-		email: text("email").notNull(),
-		role: text("role"),
-		status: text("status").default("pending").notNull(),
-		expiresAt: timestamp("expires_at").notNull(),
-		createdAt: timestamp("created_at").defaultNow().notNull(),
-		inviterId: uuid("inviter_id")
-			.notNull()
-			.references(() => users.id, { onDelete: "cascade" }),
-	},
-	(table) => [
-		index("invitations_organization_id_idx").on(table.organizationId),
-		index("invitations_email_idx").on(table.email),
-	],
-);
-
-export type SelectInvitation = typeof invitations.$inferSelect;
-export type InsertInvitation = typeof invitations.$inferInsert;
 
 export const oauthClients = authSchema.table("oauth_clients", {
 	id: uuid("id").primaryKey().defaultRandom(),
