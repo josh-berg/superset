@@ -1,5 +1,6 @@
 import { Button } from "@superset/ui/button";
 import { CommandEmpty, CommandGroup, CommandItem } from "@superset/ui/command";
+import { toast } from "@superset/ui/sonner";
 import { eq } from "@tanstack/db";
 import { useLiveQuery } from "@tanstack/react-db";
 import { useNavigate } from "@tanstack/react-router";
@@ -28,8 +29,7 @@ export function BranchesGroup({
 	const navigate = useNavigate();
 	const collections = useCollections();
 	const { createWorkspace } = useCreateDashboardWorkspace();
-	const { draft, closeAndResetDraft, runAsyncAction } =
-		useDashboardNewWorkspaceDraft();
+	const { draft, closeAndResetDraft } = useDashboardNewWorkspaceDraft();
 
 	const hasLocalProject = !!localProjectId;
 
@@ -107,22 +107,23 @@ export function BranchesGroup({
 	const handleCreate = useCallback(
 		(branchName: string) => {
 			if (!projectId) return;
-			void runAsyncAction(
-				createWorkspace({
-					projectId,
-					name: branchName,
-					branch: branchName,
-					hostTarget,
-				}),
-				{
-					loading: "Creating workspace from branch...",
-					success: "Workspace created",
-					error: (err) =>
-						err instanceof Error ? err.message : "Failed to create workspace",
-				},
-			);
+			const promise = createWorkspace({
+				projectId,
+				name: branchName,
+				branch: branchName,
+				hostTarget,
+			});
+			toast.promise(promise, {
+				loading: "Creating workspace...",
+				success: "Workspace created",
+				error: (err) =>
+					err instanceof Error ? err.message : "Failed to create workspace",
+			});
+			promise.then(() => closeAndResetDraft()).catch(() => {
+				// Keep modal open so the user can retry
+			});
 		},
-		[createWorkspace, hostTarget, projectId, runAsyncAction],
+		[closeAndResetDraft, createWorkspace, hostTarget, projectId],
 	);
 
 	const handleOpen = useCallback(

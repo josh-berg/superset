@@ -24,7 +24,7 @@ export function DashboardNewWorkspaceModal() {
 				<DialogHeader className="sr-only">
 					<DialogTitle>New Workspace</DialogTitle>
 					<DialogDescription>
-						Create a new workspace from a PR, branch, issue, or prompt.
+						Create a new workspace from a branch.
 					</DialogDescription>
 				</DialogHeader>
 				<DialogContent

@@ -171,6 +171,8 @@ export function PromptGroup({
 	const handleCompareBaseBranchSelect = (selectedBaseBranch: string) => {
 		updateDraft({
 			compareBaseBranch: selectedBaseBranch,
+			branchName: selectedBaseBranch,
+			branchNameEdited: true,
 			branchSearch: "",
 		});
 		setCompareBaseBranchOpen(false);
