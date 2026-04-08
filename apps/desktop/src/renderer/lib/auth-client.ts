@@ -13,11 +13,6 @@ export function getAuthToken(): string | null {
 	return authToken;
 }
 
-// Stub: JWT no longer used (Electric SQL will be replaced in Phase 3)
-export function getJwt(): string | null {
-	return null;
-}
-
 /**
  * Better Auth client for Electron desktop app.
  *
