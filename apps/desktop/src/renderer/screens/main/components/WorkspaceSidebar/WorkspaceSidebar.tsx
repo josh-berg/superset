@@ -7,7 +7,6 @@ import { ProjectSection } from "./ProjectSection";
 import { SetupScriptCard } from "./SetupScriptCard";
 import { SidebarDropZone } from "./SidebarDropZone";
 import { WorkspaceSidebarFooter } from "./WorkspaceSidebarFooter";
-import { WorkspaceSidebarHeader } from "./WorkspaceSidebarHeader";
 
 interface WorkspaceSidebarProps {
 	isCollapsed?: boolean;
@@ -71,8 +70,6 @@ export function WorkspaceSidebar({
 
 	return (
 		<SidebarDropZone className="flex flex-col h-full bg-muted/45 dark:bg-muted/35">
-			<WorkspaceSidebarHeader isCollapsed={isCollapsed} />
-
 			{/* biome-ignore lint/a11y/noStaticElementInteractions: mousedown on empty sidebar space clears selection */}
 			<div
 				className="flex-1 overflow-y-auto hide-scrollbar"

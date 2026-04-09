@@ -8,20 +8,15 @@ import {
 	CommandList,
 	CommandSeparator,
 } from "@superset/ui/command";
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@superset/ui/popover";
 import { toast } from "@superset/ui/sonner";
 import { useNavigate } from "@tanstack/react-router";
 import Fuse from "fuse.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GoArrowUpRight, GoGitBranch, GoGlobe } from "react-icons/go";
-import { HiCheck, HiChevronUpDown } from "react-icons/hi2";
-import { LuFolderGit, LuFolderOpen } from "react-icons/lu";
+import { LuChevronLeft, LuFolderGit, LuFolderOpen } from "react-icons/lu";
 import { useDebouncedValue } from "renderer/hooks/useDebouncedValue";
 import { electronTrpc } from "renderer/lib/electron-trpc";
+import { useOpenProject } from "renderer/react-query/projects";
 import { navigateToWorkspace } from "renderer/routes/_authenticated/_dashboard/utils/workspace-navigation";
 import { ProjectThumbnail } from "renderer/screens/main/components/WorkspaceSidebar/ProjectSection/ProjectThumbnail";
 import { useNewWorkspaceModalDraft } from "../../NewWorkspaceModalDraftContext";
@@ -29,25 +24,32 @@ import { useNewWorkspaceModalDraft } from "../../NewWorkspaceModalDraftContext";
 const COMMAND_CLASS_NAME =
 	"[&_[cmdk-group-heading]]:text-muted-foreground **:data-[slot=command-input-wrapper]:h-12 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group]]:px-2 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5 flex h-full w-full flex-1 flex-col overflow-hidden rounded-none";
 
+type ModalStep = "project" | "branch";
+
 interface NewWorkspaceModalContentProps {
 	isOpen: boolean;
 	preSelectedProjectId: string | null;
-	onImportRepo: () => Promise<void>;
 	onNewProject: () => void;
 }
 
 export function NewWorkspaceModalContent({
 	isOpen,
 	preSelectedProjectId,
-	onImportRepo,
 	onNewProject,
 }: NewWorkspaceModalContentProps) {
 	const navigate = useNavigate();
 	const { draft, updateDraft, createWorkspace, closeAndResetDraft } =
 		useNewWorkspaceModalDraft();
+	const { openNew } = useOpenProject();
 	const { data: recentProjects = [], isFetched: areRecentProjectsFetched } =
 		electronTrpc.projects.getRecents.useQuery();
 	const utils = electronTrpc.useUtils();
+
+	const [step, setStep] = useState<ModalStep>("project");
+
+	useEffect(() => {
+		if (!isOpen) setStep("project");
+	}, [isOpen]);
 
 	useEffect(() => {
 		if (!isOpen) return;
@@ -205,91 +207,94 @@ export function NewWorkspaceModalContent({
 		[closeAndResetDraft, createWorkspace, navigate, projectId],
 	);
 
-	const [projectPickerOpen, setProjectPickerOpen] = useState(false);
+	const handleProjectSelect = (selectedProjectId: string) => {
+		updateDraft({ selectedProjectId });
+		setStep("branch");
+	};
+
+	if (step === "project") {
+		return (
+			<>
+				<div className="flex items-center border-b px-4 py-2.5 shrink-0">
+					<span className="text-sm font-medium">New Workspace</span>
+				</div>
+
+				<Command className={COMMAND_CLASS_NAME}>
+					<CommandInput placeholder="Search repositories..." />
+					<CommandList className="!max-h-none flex-1 overflow-y-auto">
+						<CommandEmpty>No projects found.</CommandEmpty>
+						<CommandGroup>
+							{recentProjects
+								.filter((p) => Boolean(p.id))
+								.map((project) => (
+									<CommandItem
+										key={project.id}
+										value={project.name}
+										onSelect={() => handleProjectSelect(project.id)}
+										className="h-12"
+									>
+										<ProjectThumbnail
+											projectId={project.id}
+											projectName={project.name}
+											projectColor={project.color}
+											githubOwner={project.githubOwner}
+											iconUrl={project.iconUrl}
+											hideImage={project.hideImage ?? false}
+										/>
+										{project.name}
+									</CommandItem>
+								))}
+						</CommandGroup>
+						<CommandSeparator alwaysRender />
+						<CommandGroup forceMount>
+							<CommandItem
+								forceMount
+								onSelect={() => {
+									void openNew().then((projects) => {
+										if (projects.length > 0) {
+											updateDraft({ selectedProjectId: projects[0].id });
+										}
+									});
+								}}
+							>
+								<LuFolderOpen className="size-4" />
+								Open project
+							</CommandItem>
+							<CommandItem forceMount onSelect={onNewProject}>
+								<LuFolderGit className="size-4" />
+								New project
+							</CommandItem>
+						</CommandGroup>
+					</CommandList>
+				</Command>
+			</>
+		);
+	}
 
 	return (
 		<>
-			<div className="flex items-center justify-between border-b px-4 py-2.5 shrink-0">
-				<span className="text-sm font-medium">New Workspace</span>
-				<Popover open={projectPickerOpen} onOpenChange={setProjectPickerOpen}>
-					<PopoverTrigger asChild>
-						<Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1">
-							{selectedProject && (
-								<ProjectThumbnail
-									projectId={selectedProject.id}
-									projectName={selectedProject.name}
-									projectColor={selectedProject.color}
-									githubOwner={selectedProject.githubOwner}
-									iconUrl={selectedProject.iconUrl}
-									hideImage={selectedProject.hideImage ?? false}
-									className="!size-4"
-								/>
-							)}
-							<span className="truncate max-w-[140px]">
-								{selectedProject?.name ?? "Select project"}
-							</span>
-							<HiChevronUpDown className="size-3" />
-						</Button>
-					</PopoverTrigger>
-					<PopoverContent align="end" className="w-60 p-0">
-						<Command>
-							<CommandInput placeholder="Search projects..." />
-							<CommandList className="max-h-72">
-								<CommandEmpty>No projects found.</CommandEmpty>
-								<CommandGroup>
-									{recentProjects
-										.filter((p) => Boolean(p.id))
-										.map((project) => (
-											<CommandItem
-												key={project.id}
-												value={project.name}
-												onSelect={() => {
-													updateDraft({ selectedProjectId: project.id });
-													setProjectPickerOpen(false);
-												}}
-											>
-												<ProjectThumbnail
-													projectId={project.id}
-													projectName={project.name}
-													projectColor={project.color}
-													githubOwner={project.githubOwner}
-													iconUrl={project.iconUrl}
-													hideImage={project.hideImage ?? false}
-												/>
-												{project.name}
-												{project.id === selectedProject?.id && (
-													<HiCheck className="ml-auto size-4" />
-												)}
-											</CommandItem>
-										))}
-								</CommandGroup>
-								<CommandSeparator alwaysRender />
-								<CommandGroup forceMount>
-									<CommandItem
-										forceMount
-										onSelect={() => {
-											setProjectPickerOpen(false);
-											void onImportRepo();
-										}}
-									>
-										<LuFolderOpen className="size-4" />
-										Open project
-									</CommandItem>
-									<CommandItem
-										forceMount
-										onSelect={() => {
-											setProjectPickerOpen(false);
-											onNewProject();
-										}}
-									>
-										<LuFolderGit className="size-4" />
-										New project
-									</CommandItem>
-								</CommandGroup>
-							</CommandList>
-						</Command>
-					</PopoverContent>
-				</Popover>
+			<div className="flex items-center gap-2 border-b px-2 py-2 shrink-0">
+				<button
+					type="button"
+					onClick={() => setStep("project")}
+					className="flex items-center justify-center size-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+				>
+					<LuChevronLeft className="size-4" />
+				</button>
+				{selectedProject && (
+					<ProjectThumbnail
+						projectId={selectedProject.id}
+						projectName={selectedProject.name}
+						projectColor={selectedProject.color}
+						githubOwner={selectedProject.githubOwner}
+						iconUrl={selectedProject.iconUrl}
+						hideImage={selectedProject.hideImage ?? false}
+						className="!size-4"
+					/>
+				)}
+				<span className="text-sm font-medium truncate">
+					{selectedProject?.name ?? "New Workspace"}
+				</span>
 			</div>
 
 			<Command shouldFilter={false} className={COMMAND_CLASS_NAME}>

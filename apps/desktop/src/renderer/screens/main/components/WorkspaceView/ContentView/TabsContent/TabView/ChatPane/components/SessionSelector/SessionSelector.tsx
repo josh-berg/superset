@@ -12,7 +12,7 @@ import {
 	HiMiniChevronDown,
 	HiMiniPlus,
 } from "react-icons/hi2";
-import { getRelativeTime } from "../../../../../../../WorkspacesListView/utils";
+import { getRelativeTime } from "./utils";
 import { SessionSelectorItem } from "./components/SessionSelectorItem";
 
 interface SessionItem {
