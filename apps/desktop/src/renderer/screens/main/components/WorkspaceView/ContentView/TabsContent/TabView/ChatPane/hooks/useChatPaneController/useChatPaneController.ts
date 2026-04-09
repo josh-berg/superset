@@ -1,11 +1,7 @@
 import { toast } from "@superset/ui/sonner";
-import { eq } from "@tanstack/db";
 import { useLiveQuery } from "@tanstack/react-db";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { StartFreshSessionResult } from "renderer/components/Chat/ChatInterface/types";
-import { env } from "renderer/env.renderer";
-import { apiTrpcClient } from "renderer/lib/api-trpc-client";
-import { authClient, getAuthToken } from "renderer/lib/auth-client";
 import {
 	isDesktopChatDevMode,
 	isDesktopChatSessionReady,
@@ -19,7 +15,6 @@ import type { ChatLaunchConfig } from "shared/tabs-types";
 import { reportChatError } from "../../utils/reportChatError";
 import { createSessionInitRunner } from "../../utils/session-init-runner";
 
-const apiUrl = env.NEXT_PUBLIC_API_URL;
 const SESSION_INIT_RETRY_DELAY_MS = 1500;
 const SESSION_INIT_MAX_RETRIES = 3;
 
@@ -70,59 +65,16 @@ function toSessionSelectorItem(session: {
 	};
 }
 
-async function getHttpErrorDetail(response: Response): Promise<string> {
-	const errorBody = await response
-		.text()
-		.then((text) => text.trim())
-		.catch(() => "");
-	const statusText = response.statusText ? ` ${response.statusText}` : "";
-	const detail = errorBody ? ` - ${errorBody.slice(0, 500)}` : "";
-	return `${response.status}${statusText}${detail}`;
-}
-
-async function createSessionRecord(input: {
+async function createSessionRecord(_input: {
 	sessionId: string;
 	organizationId: string;
 	workspaceId: string;
 }): Promise<void> {
-	if (isDesktopChatDevMode()) return;
-	const token = getAuthToken();
-	const response = await fetch(`${apiUrl}/api/chat/${input.sessionId}`, {
-		method: "PUT",
-		headers: {
-			"Content-Type": "application/json",
-			...(token ? { Authorization: `Bearer ${token}` } : {}),
-		},
-		body: JSON.stringify({
-			organizationId: input.organizationId,
-			workspaceId: input.workspaceId,
-		}),
-	});
-
-	if (!response.ok) {
-		const detail = await getHttpErrorDetail(response);
-		console.warn("[chat-sessions] create session failed", {
-			sessionId: input.sessionId,
-			organizationId: input.organizationId,
-			workspaceId: input.workspaceId,
-			detail,
-		});
-		throw new Error(`Failed to create session ${input.sessionId}: ${detail}`);
-	}
+	// Local-only: no cloud session records needed
 }
 
-async function deleteSessionRecord(sessionId: string): Promise<void> {
-	if (isDesktopChatDevMode()) return;
-	const token = getAuthToken();
-	const response = await fetch(`${apiUrl}/api/chat/${sessionId}/stream`, {
-		method: "DELETE",
-		headers: token ? { Authorization: `Bearer ${token}` } : {},
-	});
-
-	if (!response.ok) {
-		const detail = await getHttpErrorDetail(response);
-		throw new Error(`Failed to delete session ${sessionId}: ${detail}`);
-	}
+async function deleteSessionRecord(_sessionId: string): Promise<void> {
+	// Local-only: no cloud session records needed
 }
 
 export function useChatPaneController({
@@ -137,76 +89,14 @@ export function useChatPaneController({
 	const sessionId = pane?.chat?.sessionId ?? null;
 	const launchConfig = pane?.chat?.launchConfig ?? null;
 	const needsLegacySessionBootstrap = sessionId === null;
-	const { data: session } = authClient.useSession();
-	const organizationId = resolveDesktopChatOrganizationId(
-		session?.session?.activeOrganizationId,
-	);
+	const organizationId = resolveDesktopChatOrganizationId();
 	const collections = useCollections();
 	const legacySessionBootstrapRef = useRef(false);
-	const ensuredRef = useRef<string | null>(null);
 
 	const { data: workspace } = electronTrpc.workspaces.get.useQuery(
 		{ id: workspaceId },
 		{ enabled: Boolean(workspaceId) },
 	);
-
-	const { data: remoteWorkspaces } = useLiveQuery(
-		(q) =>
-			q
-				.from({ ws: collections.workspaces })
-				.where(({ ws }) => eq(ws.id, workspaceId))
-				.select(({ ws }) => ({ id: ws.id })),
-		[collections.workspaces, workspaceId],
-	);
-	const existsRemotely = Boolean(
-		remoteWorkspaces && remoteWorkspaces.length > 0,
-	);
-
-	useEffect(() => {
-		if (isDesktopChatDevMode()) return;
-		if (existsRemotely) return;
-		if (!workspace?.project || !organizationId) return;
-		if (ensuredRef.current === workspaceId) return;
-
-		const project = workspace.project;
-		const repoName = project.mainRepoPath.split("/").pop();
-		if (!repoName || !project.githubOwner) return;
-
-		ensuredRef.current = workspaceId;
-
-		apiTrpcClient.workspace.ensure
-			.mutate({
-				organizationId,
-				project: {
-					name: project.name,
-					slug: repoName.toLowerCase(),
-					repoOwner: project.githubOwner,
-					repoName,
-					repoUrl: `https://github.com/${project.githubOwner}/${repoName}`,
-					defaultBranch: project.defaultBranch ?? "main",
-				},
-				workspace: {
-					id: workspaceId,
-					name: workspace.name,
-					type: "local",
-					config: {
-						path: workspace.worktreePath,
-						branch:
-							workspace.worktree?.branch ?? project.defaultBranch ?? "main",
-					},
-				},
-			})
-			.catch((error) => {
-				reportChatError({
-					operation: "workspace.ensure",
-					error,
-					workspaceId,
-					paneId,
-					organizationId,
-				});
-				ensuredRef.current = null;
-			});
-	}, [existsRemotely, organizationId, paneId, workspace, workspaceId]);
 
 	const { data: allSessionsData } = useLiveQuery(
 		(q) =>

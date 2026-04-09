@@ -59,7 +59,7 @@ export function getProviderDiagnostic(
 }
 
 export function getProviderDiagnostics(): ProviderDiagnostic[] {
-	return [getProviderDiagnostic("anthropic"), getProviderDiagnostic("openai")];
+	return [getProviderDiagnostic("anthropic")];
 }
 
 export function reportProviderIssue(

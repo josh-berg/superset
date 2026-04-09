@@ -11,10 +11,6 @@ import {
 	session,
 } from "electron";
 import { makeAppSetup } from "lib/electron-app/factories/app/setup";
-import {
-	handleAuthCallback,
-	parseAuthDeepLink,
-} from "lib/trpc/routers/auth/utils/auth-functions";
 import { applyShellEnvToProcess } from "lib/trpc/routers/workspaces/utils/shell-env";
 import {
 	DEFAULT_CONFIRM_ON_QUIT,
@@ -68,18 +64,7 @@ if (process.defaultApp) {
 async function processDeepLink(url: string): Promise<void> {
 	console.log("[main] Processing deep link:", url);
 
-	const authParams = parseAuthDeepLink(url);
-	if (authParams) {
-		const result = await handleAuthCallback(authParams);
-		if (result.success) {
-			focusMainWindow();
-		} else {
-			console.error("[main] Auth deep link failed:", result.error);
-		}
-		return;
-	}
-
-	// Non-auth deep links: extract path and navigate in renderer
+	// Extract path and navigate in renderer
 	// e.g. superset://tasks/my-slug -> /tasks/my-slug
 	const path = `/${url.split("://")[1]}`;
 	focusMainWindow();

@@ -7,23 +7,16 @@ import { Button } from "@superset/ui/button";
 import { Label } from "@superset/ui/label";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HiOutlinePlus } from "react-icons/hi2";
-import { useIsDarkTheme } from "renderer/assets/app-icons/preset-icons";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { usePresets } from "renderer/react-query/presets";
 import type { PresetColumnKey } from "renderer/routes/_authenticated/settings/presets/types";
 import { PresetEditorSheet } from "./components/PresetEditorSheet";
 import { PresetsTable } from "./components/PresetsTable";
-import { QuickAddPresets } from "./components/QuickAddPresets";
-import {
-	type AutoApplyField,
-	PRESET_TEMPLATES,
-	type PresetTemplate,
-} from "./constants";
+import type { AutoApplyField } from "./constants";
 import type { PresetProjectOption } from "./preset-project-options";
 
 interface PresetsSectionProps {
 	showPresets: boolean;
-	showQuickAdd: boolean;
 	editingPresetId?: string | null;
 	onEditingPresetIdChange?: (presetId: string | null) => void;
 	pendingCreateProjectId?: string | null;
@@ -32,13 +25,11 @@ interface PresetsSectionProps {
 
 export function PresetsSection({
 	showPresets,
-	showQuickAdd,
 	editingPresetId: editingPresetIdFromRoute,
 	onEditingPresetIdChange,
 	pendingCreateProjectId,
 	onPendingCreateProjectIdChange,
 }: PresetsSectionProps) {
-	const isDark = useIsDarkTheme();
 	const { data: groupedProjects = [] } =
 		electronTrpc.workspaces.getAllGrouped.useQuery();
 	const {
@@ -146,11 +137,6 @@ export function PresetsSection({
 	const existingPresetNames = useMemo(
 		() => new Set(serverPresets.map((preset) => preset.name)),
 		[serverPresets],
-	);
-
-	const isTemplateAdded = useCallback(
-		(template: PresetTemplate) => existingPresetNames.has(template.preset.name),
-		[existingPresetNames],
 	);
 
 	const handleCellChange = useCallback(
@@ -267,14 +253,6 @@ export function PresetsSection({
 			});
 		},
 		[createPreset],
-	);
-
-	const handleAddTemplate = useCallback(
-		(template: PresetTemplate) => {
-			if (existingPresetNames.has(template.preset.name)) return;
-			createPreset.mutate(template.preset);
-		},
-		[createPreset, existingPresetNames],
 	);
 
 	useEffect(() => {
@@ -464,16 +442,6 @@ export function PresetsSection({
 					</Button>
 				)}
 			</div>
-
-			{showQuickAdd && (
-				<QuickAddPresets
-					templates={PRESET_TEMPLATES}
-					isDark={isDark}
-					isCreatePending={createPreset.isPending}
-					isTemplateAdded={isTemplateAdded}
-					onAddTemplate={handleAddTemplate}
-				/>
-			)}
 
 			{showPresets && (
 				<>

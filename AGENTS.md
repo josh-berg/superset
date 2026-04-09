@@ -6,26 +6,19 @@ Guidelines for agents and developers working in this repository.
 
 Bun + Turbo monorepo with:
 - **Apps**:
-  - `apps/web` - Main web application (app.superset.sh)
-  - `apps/marketing` - Marketing site (superset.sh)
-  - `apps/admin` - Admin dashboard
-  - `apps/api` - API backend
   - `apps/desktop` - Electron desktop application
-  - `apps/docs` - Documentation site
-  - `apps/mobile` - React Native mobile app (Expo)
 - **Packages**:
-  - `packages/ui` - Shared UI components (shadcn/ui + TailwindCSS v4).
-    - Add components: `npx shadcn@latest add <component>` (run in `packages/ui/`)
-  - `packages/db` - Drizzle ORM database schema
-  - `packages/auth` - Authentication
-  - `packages/trpc` - Shared tRPC definitions
-  - `packages/shared` - Shared utilities
-  - `packages/mcp` - MCP integration
+  - `packages/chat` - Chat UI components (slash command discovery via `.claude/commands`)
   - `packages/desktop-mcp` - Desktop MCP server
-  - `packages/local-db` - Local SQLite database
-  - `packages/durable-session` - Durable session management
-  - `packages/email` - Email templates/sending
-  - `packages/scripts` - CLI tooling
+  - `packages/host-service` - Host service (process management layer)
+  - `packages/local-db` - Local SQLite database (Drizzle ORM)
+  - `packages/macos-process-metrics` - macOS native process metrics
+  - `packages/panes` - Pane layout management
+  - `packages/shared` - Shared utilities and constants
+  - `packages/ui` - Shared UI components (shadcn/ui + TailwindCSS v4)
+    - Add components: `bunx shadcn@latest add <component>` (run in `packages/ui/`)
+  - `packages/workspace-client` - Workspace tRPC client and React hooks
+  - `packages/workspace-fs` - Workspace filesystem operations
 - **Tooling**:
   - `tooling/typescript` - Shared TypeScript configs
 
@@ -33,10 +26,11 @@ Bun + Turbo monorepo with:
 
 - **Package Manager**: Bun (no npm/yarn/pnpm)
 - **Build System**: Turborepo
-- **Database**: Drizzle ORM + Neon PostgreSQL
+- **Framework**: Electron + electron-vite
+- **Database**: Drizzle ORM + local SQLite (`packages/local-db`)
 - **UI**: React + TailwindCSS v4 + shadcn/ui
+- **IPC**: tRPC via `trpc-electron` (use `observable` pattern for subscriptions — async generators are not supported)
 - **Code Quality**: Biome (formatting + linting at root)
-- **Next.js**: Version 16 - NEVER create `middleware.ts`. Next.js 16 renamed middleware to `proxy.ts`. Always use `proxy.ts` for request interception.
 
 ## Common Commands
 
@@ -69,8 +63,8 @@ bun run clean:workspaces   # Clean all workspace node_modules
 ## Agent Rules
 1. **Type safety** - avoid `any` unless necessary
 2. **Prefer `gh` CLI** - when performing git operations (PRs, issues, checkout, etc.), prefer the GitHub CLI (`gh`) over raw `git` commands where possible
-3. **Shared command source** - keep command definitions in `.agents/commands/` only. `.claude/commands` and `.cursor/commands` should be symlinks to `../.agents/commands`. (`packages/chat` discovers slash commands from `.claude/commands`.)
-4. **Workspace MCP config** - keep shared MCP servers in `.mcp.json`; `.cursor/mcp.json` should link to `../.mcp.json`. Codex uses `.codex/config.toml` (run with `CODEX_HOME=.codex codex ...`). OpenCode uses `opencode.json` and should mirror the same MCP set using OpenCode's `remote`/`local` schema.
+3. **Shared command source** - keep command definitions in `.agents/commands/` only. `.claude/commands` should be a symlink to `../.agents/commands`. (`packages/chat` discovers slash commands from `.claude/commands`.)
+4. **Workspace MCP config** - keep shared MCP servers in `.mcp.json`.
 5. **Mastra dependencies** - use the published upstream `mastracode` and `@mastra/*` packages. Do not add fork tarball overrides or custom patch steps unless explicitly requested.
 6. **Package age security policy** - global `npm`, `bun`, `pnpm`, and `uv` configs enforce a 7-day minimum release age, and `npm` also has `ignore-scripts=true`. If package install/update/add commands fail because a version is too new or a lifecycle script is blocked, do not keep retrying, disable the policy, or suggest bypass flags. Choose an older version that satisfies the policy, or stop and surface the blocked dependency clearly.
 
@@ -153,15 +147,7 @@ The `src/components/ui/` and `src/components/ai-elements` directories contain sh
 
 ## Database Rules
 
-** IMPORTANT ** - Never touch the production database unless explicitly asked to. Even then, confirm with the user first.
-
-- Schema in `packages/db/src/`
+- Schema in `packages/local-db/src/schema/`
 - Use Drizzle ORM for all database operations
-
-## DB migrations
-- Always spin up a new neon branch to create migrations. Update our root .env files to point at the neon branch locally.
-- Use drizzle to manage the migration. You can see the schema at packages/db/src/schema. Never run a migration yourself.
-- Create migrations by changing drizzle schema then running `bunx drizzle-kit generate --name="<sample_name_snake_case>"`
-- `NEON_ORG_ID` and `NEON_PROJECT_ID` env vars are set in .env
-- list_projects tool requires org_id passed in
-- **NEVER manually edit files in `packages/db/drizzle/`** - this includes `.sql` migration files, `meta/_journal.json`, and snapshot files. These are auto-generated by Drizzle. If you need to create a migration, only modify the schema files in `packages/db/src/schema/` and ask the user to run `drizzle-kit generate`.
+- Generate migrations: `bun run --cwd packages/local-db generate`
+- **NEVER manually edit generated migration files** — only modify schema files and regenerate

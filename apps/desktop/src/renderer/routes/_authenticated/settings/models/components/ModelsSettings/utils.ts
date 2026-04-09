@@ -73,7 +73,6 @@ export function buildAnthropicEnvText(values: AnthropicFormValues): string {
 
 const EXTERNAL_OAUTH_LABELS: Record<ProviderId, string> = {
 	anthropic: "Connected via Claude",
-	openai: "Connected via ChatGPT",
 };
 
 export function getProviderSubtitle(

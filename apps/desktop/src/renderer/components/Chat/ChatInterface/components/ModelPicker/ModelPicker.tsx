@@ -44,13 +44,11 @@ export function ModelPicker({
 		: null;
 	const { data: anthropicStatus, refetch: refetchAnthropicStatus } =
 		chatServiceTrpc.auth.getAnthropicStatus.useQuery();
-	const { data: openAIStatus, refetch: refetchOpenAIStatus } =
-		chatServiceTrpc.auth.getOpenAIStatus.useQuery();
 
 	useEffect(() => {
 		if (!open) return;
-		void Promise.all([refetchAnthropicStatus(), refetchOpenAIStatus()]);
-	}, [open, refetchAnthropicStatus, refetchOpenAIStatus]);
+		void refetchAnthropicStatus();
+	}, [open, refetchAnthropicStatus]);
 
 	const openModelsSettings = () => {
 		onOpenChange(false);
@@ -85,10 +83,6 @@ export function ModelPicker({
 							isAnthropicOAuthPending={false}
 							isAnthropicApiKeyPending={false}
 							onOpenAnthropicAuthModal={openModelsSettings}
-							isOpenAIAuthenticated={openAIStatus?.authenticated ?? false}
-							isOpenAIOAuthPending={false}
-							isOpenAIApiKeyPending={false}
-							onOpenOpenAIAuthModal={openModelsSettings}
 							onSelectModel={onSelectModel}
 							onCloseModelSelector={() => {
 								onOpenChange(false);

@@ -36,12 +36,8 @@ export function isDesktopChatDevMode(
 	return skipEnvValidation;
 }
 
-export function resolveDesktopChatOrganizationId(
-	activeOrganizationId: string | null | undefined,
-	skipEnvValidation = env.SKIP_ENV_VALIDATION,
-): string | null {
-	if (skipEnvValidation) return MOCK_ORG_ID;
-	return activeOrganizationId ?? null;
+export function resolveDesktopChatOrganizationId(): string {
+	return MOCK_ORG_ID;
 }
 
 export function isDesktopChatSessionReady({

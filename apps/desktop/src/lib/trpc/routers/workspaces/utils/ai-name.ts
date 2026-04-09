@@ -38,15 +38,7 @@ export async function generateWorkspaceNameFromPrompt(prompt: string): Promise<{
 	warning?: string;
 }> {
 	const { result, attempts } = await callSmallModel<string>({
-		invoke: async ({ credentials, providerId, providerName, model }) => {
-			if (providerId === "openai" && credentials.kind === "oauth") {
-				return generateTitleFromMessageWithStreamingModel({
-					message: prompt,
-					model: model as never,
-					instructions: "You generate concise workspace titles.",
-				});
-			}
-
+		invoke: async ({ providerId, providerName, model }) => {
 			return generateTitleFromMessage({
 				message: prompt,
 				agentModel: model,

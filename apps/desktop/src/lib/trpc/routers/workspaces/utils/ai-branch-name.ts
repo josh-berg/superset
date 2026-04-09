@@ -82,15 +82,7 @@ export async function generateBranchNameFromPrompt(
 	branchPrefix?: string,
 ): Promise<string | null> {
 	const { result } = await callSmallModel<string>({
-		invoke: async ({ credentials, providerId, providerName, model }) => {
-			if (providerId === "openai" && credentials.kind === "oauth") {
-				return generateTitleFromMessageWithStreamingModel({
-					message: prompt,
-					model: model as never,
-					instructions: BRANCH_NAME_INSTRUCTIONS,
-				});
-			}
-
+		invoke: async ({ providerId, providerName, model }) => {
 			return generateTitleFromMessage({
 				message: prompt,
 				agentModel: model,

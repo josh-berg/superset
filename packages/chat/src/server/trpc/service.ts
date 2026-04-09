@@ -1,5 +1,3 @@
-import type { AppRouter } from "@superset/trpc";
-import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { initTRPC } from "@trpc/server";
 import { createAuthStorage, createMastraCode } from "mastracode";
 import superjson from "superjson";
@@ -36,8 +34,6 @@ import {
 const ENABLE_MASTRA_MCP_SERVERS = false;
 
 function resolveOmModelFromAuth(): string | undefined {
-	if (process.env.GOOGLE_GENERATIVE_AI_API_KEY)
-		return "google/gemini-2.5-flash";
 	const authStorage = createAuthStorage();
 	authStorage.reload();
 	const anthropic = authStorage.get("anthropic");
@@ -47,19 +43,10 @@ function resolveOmModelFromAuth(): string | undefined {
 	) {
 		return "anthropic/claude-haiku-4-5";
 	}
-	const openai = authStorage.get("openai-codex");
-	if (
-		openai?.type === "oauth" ||
-		(openai?.type === "api_key" && openai.key.trim())
-	) {
-		return "openai/gpt-4.1-nano";
-	}
 	return undefined;
 }
 
 export interface ChatRuntimeServiceOptions {
-	headers: () => Record<string, string> | Promise<Record<string, string>>;
-	apiUrl: string;
 	onLifecycleEvent?: (event: LifecycleEvent) => void;
 }
 
@@ -69,21 +56,8 @@ export class ChatRuntimeService {
 		string,
 		Promise<RuntimeSession>
 	>();
-	private readonly apiClient: ReturnType<typeof createTRPCClient<AppRouter>>;
 
-	constructor(readonly opts: ChatRuntimeServiceOptions) {
-		this.apiClient = createTRPCClient<AppRouter>({
-			links: [
-				httpBatchLink({
-					url: `${opts.apiUrl}/api/trpc`,
-					transformer: superjson,
-					async headers() {
-						return opts.headers();
-					},
-				}),
-			],
-		});
-	}
+	constructor(readonly opts: ChatRuntimeServiceOptions) {}
 
 	private async getOrCreateRuntime(
 		sessionId: string,
@@ -111,8 +85,8 @@ export class ChatRuntimeService {
 		const creationPromise = (async () => {
 			try {
 				const extraTools = await getSupersetMcpTools(
-					() => Promise.resolve(this.opts.headers()),
-					this.opts.apiUrl,
+					() => Promise.resolve({}),
+					"",
 				);
 
 				const omModel = resolveOmModelFromAuth();
@@ -278,7 +252,7 @@ export class ChatRuntimeService {
 						if (thinkingLevel) {
 							await runtime.harness.setState({ thinkingLevel });
 						}
-						void generateAndSetTitle(runtime, this.apiClient, {
+						void generateAndSetTitle(runtime, {
 							submittedUserMessage:
 								submittedUserMessage.length > 0
 									? submittedUserMessage
@@ -304,7 +278,7 @@ export class ChatRuntimeService {
 							payload: input.payload,
 							metadata: input.metadata,
 						});
-						void generateAndSetTitle(runtime, this.apiClient, {
+						void generateAndSetTitle(runtime, {
 							submittedUserMessage:
 								submittedUserMessage.length > 0
 									? submittedUserMessage

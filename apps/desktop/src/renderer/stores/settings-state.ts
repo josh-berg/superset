@@ -2,8 +2,6 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
 export type SettingsSection =
-	| "account"
-	| "organization"
 	| "appearance"
 	| "ringtones"
 	| "keyboard"
@@ -12,9 +10,6 @@ export type SettingsSection =
 	| "agents"
 	| "terminal"
 	| "models"
-	| "integrations"
-	| "billing"
-	| "apikeys"
 	| "permissions"
 	| "project";
 
@@ -36,7 +31,7 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>()(
 	devtools(
 		(set) => ({
-			activeSection: "account",
+			activeSection: "appearance",
 			activeProjectId: null,
 			searchQuery: "",
 			isOpen: false,
@@ -55,7 +50,7 @@ export const useSettingsStore = create<SettingsState>()(
 			openSettings: (section) =>
 				set({
 					isOpen: true,
-					activeSection: section ?? "account",
+					activeSection: section ?? "appearance",
 				}),
 
 			closeSettings: () =>

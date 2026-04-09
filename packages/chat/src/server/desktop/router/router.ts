@@ -33,20 +33,12 @@ export const anthropicOAuthCodeInput = z.object({
 	code: z.string().min(1),
 });
 
-export const openAIOAuthCodeInput = z.object({
-	code: z.string().optional(),
-});
-
 export const anthropicApiKeyInput = z.object({
 	apiKey: z.string().min(1),
 });
 
 export const anthropicEnvConfigInput = z.object({
 	envText: z.string(),
-});
-
-export const openAIApiKeyInput = z.object({
-	apiKey: z.string().min(1),
 });
 
 function resolveWorkspaceSlashCommand(input: { cwd: string; text: string }) {
@@ -96,23 +88,6 @@ export function createChatServiceRouter(service: ChatService) {
 			getAnthropicStatus: t.procedure.query(() => {
 				return service.getAnthropicAuthStatus();
 			}),
-			getOpenAIStatus: t.procedure.query(() => {
-				return service.getOpenAIAuthStatus();
-			}),
-			startOpenAIOAuth: t.procedure.mutation(() => {
-				return service.startOpenAIOAuth();
-			}),
-			completeOpenAIOAuth: t.procedure
-				.input(openAIOAuthCodeInput)
-				.mutation(async ({ input }) => {
-					return service.completeOpenAIOAuth({ code: input.code });
-				}),
-			cancelOpenAIOAuth: t.procedure.mutation(() => {
-				return service.cancelOpenAIOAuth();
-			}),
-			disconnectOpenAIOAuth: t.procedure.mutation(() => {
-				return service.disconnectOpenAIOAuth();
-			}),
 			startAnthropicOAuth: t.procedure.mutation(() => {
 				return service.startAnthropicOAuth();
 			}),
@@ -147,14 +122,6 @@ export function createChatServiceRouter(service: ChatService) {
 			}),
 			clearAnthropicApiKey: t.procedure.mutation(() => {
 				return service.clearAnthropicApiKey();
-			}),
-			setOpenAIApiKey: t.procedure
-				.input(openAIApiKeyInput)
-				.mutation(({ input }) => {
-					return service.setOpenAIApiKey({ apiKey: input.apiKey });
-				}),
-			clearOpenAIApiKey: t.procedure.mutation(() => {
-				return service.clearOpenAIApiKey();
 			}),
 		}),
 	});

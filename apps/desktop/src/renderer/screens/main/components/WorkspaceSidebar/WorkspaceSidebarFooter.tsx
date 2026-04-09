@@ -1,17 +1,10 @@
-import { Button } from "@superset/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@superset/ui/dropdown-menu";
-import { toast } from "@superset/ui/sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@superset/ui/tooltip";
-import { useNavigate } from "@tanstack/react-router";
-import { LuFolderGit, LuFolderOpen, LuFolderPlus } from "react-icons/lu";
-import { useOpenProject } from "renderer/react-query/projects";
-import { useOpenMainRepoWorkspace } from "renderer/react-query/workspaces";
-import { STROKE_WIDTH } from "./constants";
+import { useMatchRoute } from "@tanstack/react-router";
+import { LuPlus } from "react-icons/lu";
+import { useHotkeyDisplay } from "renderer/hotkeys";
+import { electronTrpc } from "renderer/lib/electron-trpc";
+import { useOpenNewWorkspaceModal } from "renderer/stores/new-workspace-modal";
+import { STROKE_WIDTH_THICK } from "./constants";
 
 interface WorkspaceSidebarFooterProps {
 	isCollapsed?: boolean;
@@ -20,95 +13,63 @@ interface WorkspaceSidebarFooterProps {
 export function WorkspaceSidebarFooter({
 	isCollapsed = false,
 }: WorkspaceSidebarFooterProps) {
-	const navigate = useNavigate();
-	const { openNew, isPending: isOpenPending } = useOpenProject();
-	const openMainRepoWorkspace = useOpenMainRepoWorkspace();
+	const openModal = useOpenNewWorkspaceModal();
+	const shortcutText = useHotkeyDisplay("NEW_WORKSPACE").text;
 
-	const handleOpenProject = async () => {
-		try {
-			const projects = await openNew();
+	const matchRoute = useMatchRoute();
+	const currentWorkspaceMatch = matchRoute({
+		to: "/workspace/$workspaceId",
+		fuzzy: true,
+	});
+	const currentWorkspaceId = currentWorkspaceMatch
+		? currentWorkspaceMatch.workspaceId
+		: null;
 
-			for (const project of projects) {
-				try {
-					await openMainRepoWorkspace.mutateAsync({
-						projectId: project.id,
-					});
-				} catch (err) {
-					toast.error(`Failed to open ${project.name}`, {
-						description:
-							err instanceof Error ? err.message : "Failed to create workspace",
-					});
-				}
-			}
-		} catch (error) {
-			toast.error("Failed to open project", {
-				description:
-					error instanceof Error ? error.message : "An unknown error occurred",
-			});
-		}
+	const { data: currentWorkspace } = electronTrpc.workspaces.get.useQuery(
+		{ id: currentWorkspaceId ?? "" },
+		{ enabled: !!currentWorkspaceId },
+	);
+
+	const handleClick = () => {
+		openModal(currentWorkspace?.projectId);
 	};
-
-	const isLoading = isOpenPending || openMainRepoWorkspace.isPending;
 
 	if (isCollapsed) {
 		return (
 			<div className="border-t border-border p-2 flex flex-col items-center gap-1">
-				<DropdownMenu>
-					<Tooltip delayDuration={300}>
-						<TooltipTrigger asChild>
-							<DropdownMenuTrigger asChild>
-								<Button
-									variant="ghost"
-									size="icon"
-									className="size-8 text-muted-foreground hover:text-foreground"
-									disabled={isLoading}
-								>
-									<LuFolderPlus className="size-4" strokeWidth={STROKE_WIDTH} />
-								</Button>
-							</DropdownMenuTrigger>
-						</TooltipTrigger>
-						<TooltipContent side="right">Add repository</TooltipContent>
-					</Tooltip>
-					<DropdownMenuContent side="top" align="start">
-						<DropdownMenuItem onClick={handleOpenProject} disabled={isLoading}>
-							<LuFolderOpen className="size-4" strokeWidth={STROKE_WIDTH} />
-							Open project
-						</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => navigate({ to: "/new-project" })}>
-							<LuFolderGit className="size-4" strokeWidth={STROKE_WIDTH} />
-							New project
-						</DropdownMenuItem>
-					</DropdownMenuContent>
-				</DropdownMenu>
+				<Tooltip delayDuration={300}>
+					<TooltipTrigger asChild>
+						<button
+							type="button"
+							onClick={handleClick}
+							className="group flex items-center justify-center size-8 rounded-md bg-accent/40 hover:bg-accent/60 transition-colors"
+						>
+							<div className="flex items-center justify-center size-5 rounded bg-accent">
+								<LuPlus className="size-3" strokeWidth={STROKE_WIDTH_THICK} />
+							</div>
+						</button>
+					</TooltipTrigger>
+					<TooltipContent side="right">
+						New Workspace ({shortcutText})
+					</TooltipContent>
+				</Tooltip>
 			</div>
 		);
 	}
 
 	return (
-		<div className="border-t border-border p-2 flex items-center gap-2">
-			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
-					<Button
-						variant="ghost"
-						size="sm"
-						className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
-						disabled={isLoading}
-					>
-						<LuFolderPlus className="w-4 h-4" strokeWidth={STROKE_WIDTH} />
-						<span>Add repository</span>
-					</Button>
-				</DropdownMenuTrigger>
-				<DropdownMenuContent side="top" align="start">
-					<DropdownMenuItem onClick={handleOpenProject} disabled={isLoading}>
-						<LuFolderOpen className="size-4" strokeWidth={STROKE_WIDTH} />
-						Open project
-					</DropdownMenuItem>
-					<DropdownMenuItem onClick={() => navigate({ to: "/new-project" })}>
-						<LuFolderGit className="size-4" strokeWidth={STROKE_WIDTH} />
-						New project
-					</DropdownMenuItem>
-				</DropdownMenuContent>
-			</DropdownMenu>
+		<div className="border-t border-border p-2">
+			<button
+				type="button"
+				onClick={handleClick}
+				className="group flex items-center gap-2 px-2 py-1.5 w-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-md transition-colors"
+			>
+				<LuPlus className="size-4" strokeWidth={STROKE_WIDTH_THICK} />
+				<span className="flex-1 text-left">New Workspace</span>
+				<span className="text-[10px] text-muted-foreground/40 group-hover:text-muted-foreground/80 transition-colors font-mono tabular-nums shrink-0">
+					{shortcutText}
+				</span>
+			</button>
 		</div>
 	);
 }

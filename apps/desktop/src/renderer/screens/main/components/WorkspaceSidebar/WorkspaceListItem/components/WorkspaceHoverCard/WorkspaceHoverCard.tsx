@@ -20,11 +20,13 @@ import { ReviewStatus } from "./components/ReviewStatus";
 interface WorkspaceHoverCardContentProps {
 	workspaceId: string;
 	workspaceAlias?: string;
+	worktreePath?: string;
 }
 
 export function WorkspaceHoverCardContent({
 	workspaceId,
 	workspaceAlias,
+	worktreePath,
 }: WorkspaceHoverCardContentProps) {
 	const { data: worktreeInfo } =
 		electronTrpc.workspaces.getWorktreeInfo.useQuery(
@@ -98,6 +100,16 @@ export function WorkspaceHoverCardContent({
 								{branchName}
 							</code>
 						)}
+					</div>
+				)}
+				{worktreePath && (
+					<div className="space-y-0.5">
+						<span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+							Path
+						</span>
+						<code className="font-mono text-xs break-all block text-muted-foreground">
+							{worktreePath}
+						</code>
 					</div>
 				)}
 				{worktreeInfo?.createdAt && (

@@ -10,24 +10,16 @@ import { z } from "zod";
 import { publicProcedure, router } from "../..";
 import { chatService } from "../chat-service";
 
-const providerIdSchema = z.enum(["anthropic", "openai"]);
+const providerIdSchema = z.enum(["anthropic"]);
 
 async function getProviderStatuses() {
-	const [anthropicAuthStatus, openAIAuthStatus] = await Promise.all([
-		chatService.getAnthropicAuthStatus(),
-		chatService.getOpenAIAuthStatus(),
-	]);
+	const anthropicAuthStatus = await chatService.getAnthropicAuthStatus();
 
 	return [
 		deriveModelProviderStatus({
 			providerId: "anthropic",
 			authStatus: anthropicAuthStatus,
 			diagnostic: getProviderDiagnostic("anthropic"),
-		}),
-		deriveModelProviderStatus({
-			providerId: "openai",
-			authStatus: openAIAuthStatus,
-			diagnostic: getProviderDiagnostic("openai"),
 		}),
 	];
 }

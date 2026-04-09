@@ -5,17 +5,11 @@ import {
 	stripAnthropicCredentialEnvVariables,
 } from "../utils/anthropic-runtime-env";
 import { applyRuntimeEnv } from "../utils/runtime-env";
-import {
-	hasUsableCredential,
-	resolveAnthropicCredential,
-	resolveOpenAICredential,
-} from "./utils";
+import { hasUsableCredential, resolveAnthropicCredential } from "./utils";
 
 const CLEANUP_KEYS = [
 	"ANTHROPIC_API_KEY",
 	"ANTHROPIC_AUTH_TOKEN",
-	"OPENAI_API_KEY",
-	"OPENAI_AUTH_TOKEN",
 ] as const;
 
 interface LocalModelProviderOptions {
@@ -36,7 +30,6 @@ export class LocalModelProvider implements ModelProviderRuntimeResolver {
 		hasUsableRuntimeEnv: boolean;
 	} {
 		const anthropicCredential = resolveAnthropicCredential();
-		const openaiCredential = resolveOpenAICredential();
 		const anthropicEnvConfig = getAnthropicEnvConfig({
 			configPath: this.anthropicEnvConfigPath,
 		});
@@ -47,9 +40,7 @@ export class LocalModelProvider implements ModelProviderRuntimeResolver {
 		return {
 			env: runtimeEnv,
 			cleanupKeys: [...CLEANUP_KEYS],
-			hasUsableRuntimeEnv:
-				hasUsableCredential(anthropicCredential) ||
-				hasUsableCredential(openaiCredential),
+			hasUsableRuntimeEnv: hasUsableCredential(anthropicCredential),
 		};
 	}
 

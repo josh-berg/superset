@@ -393,7 +393,7 @@ export const createConfigRouter = () => {
 				return { success: true };
 			}),
 
-		// Get the config file path (creates it if it doesn't exist)
+		// Get the config file path
 		getConfigFilePath: publicProcedure
 			.input(z.object({ projectId: z.string() }))
 			.query(({ input }) => {
@@ -405,7 +405,7 @@ export const createConfigRouter = () => {
 				if (!project) {
 					return null;
 				}
-				return ensureConfigExists(project.mainRepoPath);
+				return getConfigPath(project.mainRepoPath);
 			}),
 
 		// Get the config file content

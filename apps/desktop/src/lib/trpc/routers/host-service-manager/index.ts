@@ -6,7 +6,6 @@ import {
 } from "main/lib/host-service-manager";
 import { z } from "zod";
 import { publicProcedure, router } from "../..";
-import { loadToken } from "../auth/utils/auth-functions";
 
 export const createHostServiceManagerRouter = () => {
 	return router({
@@ -19,10 +18,6 @@ export const createHostServiceManagerRouter = () => {
 			)
 			.query(async ({ input }) => {
 				const manager = getHostServiceManager();
-				const { token } = await loadToken();
-				if (token) {
-					manager.setAuthToken(token);
-				}
 				manager.setCloudApiUrl(env.NEXT_PUBLIC_API_URL);
 				if (input.organizationName) {
 					manager.setOrganizationName(
@@ -54,10 +49,6 @@ export const createHostServiceManagerRouter = () => {
 			.input(z.object({ organizationId: z.string() }))
 			.mutation(async ({ input }) => {
 				const manager = getHostServiceManager();
-				const { token } = await loadToken();
-				if (token) {
-					manager.setAuthToken(token);
-				}
 				manager.setCloudApiUrl(env.NEXT_PUBLIC_API_URL);
 				const port = await manager.restart(input.organizationId);
 				const secret = manager.getSecret(input.organizationId);

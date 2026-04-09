@@ -7,16 +7,8 @@ import {
 } from "./dev-chat";
 
 describe("dev chat helpers", () => {
-	it("uses the mock organization in dev mode", () => {
-		expect(resolveDesktopChatOrganizationId(null, true)).toBe("mock-org-id");
-		expect(resolveDesktopChatOrganizationId("org-123", true)).toBe(
-			"mock-org-id",
-		);
-	});
-
-	it("keeps the real organization outside dev mode", () => {
-		expect(resolveDesktopChatOrganizationId("org-123", false)).toBe("org-123");
-		expect(resolveDesktopChatOrganizationId(null, false)).toBeNull();
+	it("always returns mock-org-id", () => {
+		expect(resolveDesktopChatOrganizationId()).toBe("mock-org-id");
 	});
 
 	it("treats local session ids as ready in dev mode", () => {

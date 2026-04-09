@@ -11,8 +11,9 @@ interface PendingWorkspace {
 interface NewWorkspaceModalState {
 	isOpen: boolean;
 	preSelectedProjectId: string | null;
+	skipProjectStep: boolean;
 	pendingWorkspace: PendingWorkspace | null;
-	openModal: (projectId?: string) => void;
+	openModal: (projectId?: string, options?: { skipProjectStep?: boolean }) => void;
 	closeModal: () => void;
 	setPendingWorkspace: (workspace: PendingWorkspace | null) => void;
 	clearPendingWorkspace: (id: string) => void;
@@ -27,14 +28,19 @@ export const useNewWorkspaceModalStore = create<NewWorkspaceModalState>()(
 		(set) => ({
 			isOpen: false,
 			preSelectedProjectId: null,
+			skipProjectStep: false,
 			pendingWorkspace: null,
 
-			openModal: (projectId?: string) => {
-				set({ isOpen: true, preSelectedProjectId: projectId ?? null });
+			openModal: (projectId?: string, options?: { skipProjectStep?: boolean }) => {
+				set({
+					isOpen: true,
+					preSelectedProjectId: projectId ?? null,
+					skipProjectStep: options?.skipProjectStep ?? false,
+				});
 			},
 
 			closeModal: () => {
-				set({ isOpen: false, preSelectedProjectId: null });
+				set({ isOpen: false, preSelectedProjectId: null, skipProjectStep: false });
 			},
 
 			setPendingWorkspace: (workspace: PendingWorkspace | null) => {
@@ -76,6 +82,8 @@ export const useCloseNewWorkspaceModal = () =>
 	useNewWorkspaceModalStore((state) => state.closeModal);
 export const usePreSelectedProjectId = () =>
 	useNewWorkspaceModalStore((state) => state.preSelectedProjectId);
+export const useSkipProjectStep = () =>
+	useNewWorkspaceModalStore((state) => state.skipProjectStep);
 export const usePendingWorkspace = () =>
 	useNewWorkspaceModalStore((state) => state.pendingWorkspace);
 export const useSetPendingWorkspace = () =>

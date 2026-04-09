@@ -9,15 +9,14 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@superset/ui/dialog";
-import { toast } from "@superset/ui/sonner";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { electronTrpc } from "renderer/lib/electron-trpc";
-import { useOpenProject } from "renderer/react-query/projects";
 import {
 	useCloseNewWorkspaceModal,
 	useNewWorkspaceModalOpen,
 	usePreSelectedProjectId,
+	useSkipProjectStep,
 } from "renderer/stores/new-workspace-modal";
 import { NewWorkspaceModalContent } from "./components/NewWorkspaceModalContent";
 import {
@@ -46,23 +45,11 @@ export function NewWorkspaceModal() {
 	const isOpen = useNewWorkspaceModalOpen();
 	const closeModal = useCloseNewWorkspaceModal();
 	const navigate = useNavigate();
-	const { openNew } = useOpenProject();
 	const preSelectedProjectId = usePreSelectedProjectId();
+	const skipProjectStep = useSkipProjectStep();
 
 	// Prevents AgentSelect from flashing "No agent" while presets load after refresh.
 	electronTrpc.settings.getAgentPresets.useQuery();
-
-	const handleImportRepo = async () => {
-		closeModal();
-		try {
-			await openNew();
-		} catch (error) {
-			toast.error("Failed to open project", {
-				description:
-					error instanceof Error ? error.message : "An unknown error occurred",
-			});
-		}
-	};
 
 	const handleNewProject = () => {
 		closeModal();
@@ -86,7 +73,7 @@ export function NewWorkspaceModal() {
 						<NewWorkspaceModalContent
 							isOpen={isOpen}
 							preSelectedProjectId={preSelectedProjectId}
-							onImportRepo={handleImportRepo}
+							skipProjectStep={skipProjectStep}
 							onNewProject={handleNewProject}
 						/>
 					</DialogContent>

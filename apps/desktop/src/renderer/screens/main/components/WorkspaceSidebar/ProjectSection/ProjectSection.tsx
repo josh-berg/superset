@@ -152,7 +152,7 @@ export function ProjectSection({
 		);
 
 	const handleNewWorkspace = () => {
-		openModal(projectId);
+		openModal(projectId, { skipProjectStep: true });
 	};
 
 	const [{ isDragging }, drag] = useDrag(

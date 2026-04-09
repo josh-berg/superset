@@ -44,7 +44,6 @@ export const projects = sqliteTable(
 		worktreeBaseDir: text("worktree_base_dir"),
 		hideImage: integer("hide_image", { mode: "boolean" }),
 		iconUrl: text("icon_url"),
-		neonProjectId: text("neon_project_id"),
 		defaultApp: text("default_app").$type<ExternalApp>(),
 	},
 	(table) => [
@@ -191,7 +190,6 @@ export const settings = sqliteTable("settings", {
 		mode: "json",
 	}).$type<AgentCustomDefinition[]>(),
 	selectedRingtoneId: text("selected_ringtone_id"),
-	activeOrganizationId: text("active_organization_id"),
 	confirmOnQuit: integer("confirm_on_quit", { mode: "boolean" }),
 	terminalLinkBehavior: text(
 		"terminal_link_behavior",
@@ -228,8 +226,7 @@ export type InsertSettings = typeof settings.$inferInsert;
 export type SelectSettings = typeof settings.$inferSelect;
 
 // =============================================================================
-// Synced tables - mirrored from cloud Postgres via Electric SQL
-// Column names match Postgres exactly (snake_case) so Electric data writes directly
+// Synced tables
 // =============================================================================
 
 export type TaskPriority = "urgent" | "high" | "medium" | "low" | "none";

@@ -11,14 +11,9 @@ import {
 } from "@superset/ui/dropdown-menu";
 import { HiMiniPaperClip } from "react-icons/hi2";
 import { LuPlus } from "react-icons/lu";
-import { SiLinear } from "react-icons/si";
 import { PILL_BUTTON_CLASS } from "../../styles";
 
-interface PlusMenuProps {
-	onLinkIssue: () => void;
-}
-
-export function PlusMenu({ onLinkIssue }: PlusMenuProps) {
+export function PlusMenu() {
 	const attachments = usePromptInputAttachments();
 
 	return (
@@ -38,11 +33,6 @@ export function PlusMenu({ onLinkIssue }: PlusMenuProps) {
 					<HiMiniPaperClip className="size-4" />
 					Add attachment
 					<DropdownMenuShortcut>⌘U</DropdownMenuShortcut>
-				</DropdownMenuItem>
-				<DropdownMenuItem onSelect={onLinkIssue}>
-					<SiLinear className="size-4" />
-					Link issue
-					<DropdownMenuShortcut>⌘I</DropdownMenuShortcut>
 				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>

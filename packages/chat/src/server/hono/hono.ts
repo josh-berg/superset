@@ -13,10 +13,7 @@ export function createChatRuntimeHonoApp({
 	router: ChatRuntimeServiceRouter;
 } {
 	const app = new Hono();
-	const service = new ChatRuntimeService({
-		headers: () => ({}),
-		apiUrl: "",
-	});
+	const service = new ChatRuntimeService({});
 	const router = service.createRouter();
 
 	app.all(`${endpoint}/*`, async (c) => {

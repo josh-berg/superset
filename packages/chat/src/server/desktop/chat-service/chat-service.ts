@@ -4,15 +4,7 @@ import {
 	getCredentialsFromKeychain as getAnthropicCredentialsFromKeychain,
 	isClaudeCredentialExpired,
 } from "../auth/anthropic";
-import {
-	getOpenAICredentialsFromAuthStorage,
-	isOpenAICredentialExpired,
-} from "../auth/openai";
-import {
-	ANTHROPIC_AUTH_PROVIDER_ID,
-	OPENAI_AUTH_PROVIDER_ID,
-	OPENAI_AUTH_PROVIDER_IDS,
-} from "../auth/provider-ids";
+import { ANTHROPIC_AUTH_PROVIDER_ID } from "../auth/provider-ids";
 import {
 	type AnthropicEnvVariables,
 	type AnthropicRuntimeEnv,
@@ -35,8 +27,6 @@ import {
 	type OAuthFlowOptions,
 } from "./oauth-flow-controller";
 
-type OpenAIAuthStorage = ReturnType<typeof createAuthStorage>;
-
 function hasAnthropicEnvCredential(variables: AnthropicEnvVariables): boolean {
 	return Boolean(
 		variables.ANTHROPIC_API_KEY?.trim() ||
@@ -58,14 +48,13 @@ interface ChatServiceOptions {
 }
 
 export class ChatService {
-	private authStorage: OpenAIAuthStorage | null = null;
+	private authStorage: ReturnType<typeof createAuthStorage> | null = null;
 	private readonly oauthFlowController = new OAuthFlowController(() =>
 		this.getAuthStorage(),
 	);
 	private readonly anthropicEnvConfigPath: string | undefined;
 	private currentAnthropicRuntimeEnv: AnthropicRuntimeEnv = {};
 	private static readonly ANTHROPIC_AUTH_SESSION_TTL_MS = 10 * 60 * 1000;
-	private static readonly OPENAI_AUTH_SESSION_TTL_MS = 10 * 60 * 1000;
 	private static readonly OAUTH_URL_TIMEOUT_MS = 10_000;
 
 	constructor(options?: ChatServiceOptions) {
@@ -300,92 +289,6 @@ export class ChatService {
 		return status;
 	}
 
-	async getOpenAIAuthStatus(): Promise<AuthStatus> {
-		const credential = getOpenAICredentialsFromAuthStorage(
-			this.getAuthStorage(),
-		);
-		const hasExpiredOAuth =
-			credential !== null && isOpenAICredentialExpired(credential);
-		const method = credential
-			? credential.kind === "oauth"
-				? "oauth"
-				: "api_key"
-			: null;
-		const status: AuthStatus = {
-			authenticated: method !== null && !hasExpiredOAuth,
-			method: hasExpiredOAuth ? "oauth" : method,
-			source: method !== null ? "managed" : null,
-			issue: hasExpiredOAuth ? "expired" : null,
-		};
-		this.logAuthResolution("openai", {
-			resolvedMethod: status.method,
-			resolvedSource: status.source,
-			externalRuntimeAllowed: false,
-			storageProviderId: credential?.providerId ?? null,
-			storageMethod: method,
-			hasOpenAIApiKeyEnv: Boolean(process.env.OPENAI_API_KEY?.trim()),
-			hasOpenAIAuthTokenEnv: Boolean(process.env.OPENAI_AUTH_TOKEN?.trim()),
-		});
-		return status;
-	}
-
-	async setOpenAIApiKey(input: { apiKey: string }): Promise<{ success: true }> {
-		setApiKeyForProvider(
-			this.getAuthStorage(),
-			OPENAI_AUTH_PROVIDER_ID,
-			input.apiKey,
-			"OpenAI API key is required",
-		);
-		return { success: true };
-	}
-
-	async clearOpenAIApiKey(): Promise<{ success: true }> {
-		const authStorage = this.getAuthStorage();
-		for (const providerId of OPENAI_AUTH_PROVIDER_IDS) {
-			clearApiKeyForProvider(authStorage, providerId);
-		}
-		return { success: true };
-	}
-
-	async startOpenAIOAuth(): Promise<{ url: string; instructions: string }> {
-		return this.oauthFlowController.start(this.getOpenAIOAuthFlowOptions());
-	}
-
-	cancelOpenAIOAuth(): { success: true } {
-		return this.oauthFlowController.cancel(this.getOpenAIOAuthFlowOptions());
-	}
-
-	async disconnectOpenAIOAuth(): Promise<{ success: true }> {
-		const authStorage = this.getAuthStorage();
-		authStorage.reload();
-		const removedProviderIds: string[] = [];
-		for (const providerId of OPENAI_AUTH_PROVIDER_IDS) {
-			const credential = authStorage.get(providerId);
-			if (credential?.type !== "oauth") {
-				continue;
-			}
-
-			clearCredentialForProvider(authStorage, providerId);
-			removedProviderIds.push(providerId);
-		}
-		this.logAuthResolution("openai", {
-			event: "disconnect-oauth",
-			removed: removedProviderIds.length > 0,
-			removedProviderIds,
-		});
-		return { success: true };
-	}
-
-	async completeOpenAIOAuth(input: {
-		code?: string;
-	}): Promise<{ success: true }> {
-		await this.oauthFlowController.complete(
-			this.getOpenAIOAuthFlowOptions(),
-			input.code,
-		);
-		return { success: true };
-	}
-
 	async setAnthropicApiKey(input: {
 		apiKey: string;
 	}): Promise<{ success: true }> {
@@ -494,21 +397,6 @@ export class ChatService {
 		return { success: true, expiresAt: credential.expires };
 	}
 
-	private getOpenAIOAuthFlowOptions(): OAuthFlowOptions {
-		return {
-			providerId: OPENAI_AUTH_PROVIDER_ID,
-			providerName: "OpenAI",
-			sessionSlot: "openai",
-			ttlMs: ChatService.OPENAI_AUTH_SESSION_TTL_MS,
-			urlTimeoutMs: ChatService.OAUTH_URL_TIMEOUT_MS,
-			expiredMessage:
-				"OpenAI auth session expired. Start auth again and retry.",
-			defaultInstructions:
-				"Authorize OpenAI in your browser. If callback doesn't complete automatically, paste the code or callback URL here.",
-			supportsManualCodeInput: true,
-		};
-	}
-
 	private getAnthropicOAuthFlowOptions(): OAuthFlowOptions {
 		return {
 			providerId: ANTHROPIC_AUTH_PROVIDER_ID,
@@ -524,7 +412,7 @@ export class ChatService {
 		};
 	}
 
-	private getAuthStorage(): OpenAIAuthStorage {
+	private getAuthStorage(): ReturnType<typeof createAuthStorage> {
 		if (!this.authStorage) {
 			// Standalone auth storage bootstrap.
 			// This path intentionally avoids full createMastraCode runtime initialization.

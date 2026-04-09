@@ -32,7 +32,6 @@ async function main(): Promise<void> {
 	initTerminalBaseEnv(terminalBaseEnv);
 
 	const authToken = process.env.AUTH_TOKEN;
-	const cloudApiUrl = process.env.CLOUD_API_URL;
 	const dbPath = process.env.HOST_DB_PATH;
 	const deviceClientId = process.env.DEVICE_CLIENT_ID;
 	const deviceName = process.env.DEVICE_NAME;
@@ -43,8 +42,7 @@ async function main(): Promise<void> {
 	const desktopVitePort = process.env.DESKTOP_VITE_PORT ?? "5173";
 	const keepAliveAfterParent = process.env.KEEP_ALIVE_AFTER_PARENT === "1";
 
-	const auth =
-		authToken && cloudApiUrl ? new JwtApiAuthProvider(authToken) : undefined;
+	const auth = authToken ? new JwtApiAuthProvider(authToken) : undefined;
 	const hostAuth = hostServiceSecret
 		? new PskHostAuthProvider(hostServiceSecret)
 		: undefined;
@@ -53,7 +51,6 @@ async function main(): Promise<void> {
 		credentials: new LocalGitCredentialProvider(),
 		auth,
 		hostAuth,
-		cloudApiUrl,
 		dbPath,
 		deviceClientId,
 		deviceName,

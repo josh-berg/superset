@@ -251,7 +251,7 @@ export function WorkspaceListItem({
 			? { additions: pr.additions, deletions: pr.deletions }
 			: null);
 
-	const showBranchSubtitle = isBranchWorkspace || (!!name && name !== branch);
+	const hasPrBadgeRow = !!pr || isBranchWorkspace;
 
 	if (isCollapsed) {
 		return (
@@ -299,7 +299,7 @@ export function WorkspaceListItem({
 				"flex w-full pl-3 pr-2 text-sm",
 				"hover:bg-muted/50 transition-colors text-left cursor-pointer",
 				"group relative",
-				showBranchSubtitle ? "py-1.5" : "py-2 items-center",
+				hasPrBadgeRow ? "py-1.5" : "py-2 items-center",
 				isActive && "bg-muted",
 				isSelected && "bg-primary/10 ring-1 ring-inset ring-primary/30",
 				(isDragging || isMultiDragging) && "opacity-30",
@@ -313,7 +313,7 @@ export function WorkspaceListItem({
 			<div
 				className={cn(
 					"flex flex-col items-center shrink-0 mr-2.5 gap-0.5",
-					showBranchSubtitle && "mt-0.5",
+					hasPrBadgeRow && "mt-0.5",
 				)}
 			>
 				<Tooltip delayDuration={500}>
@@ -346,7 +346,7 @@ export function WorkspaceListItem({
 						)}
 					</TooltipContent>
 				</Tooltip>
-				{workspaceRunState && showBranchSubtitle && (
+				{workspaceRunState && hasPrBadgeRow && (
 					<WorkspaceRunIndicator state={workspaceRunState} variant="inline" />
 				)}
 			</div>
@@ -372,13 +372,15 @@ export function WorkspaceListItem({
 						<div className="flex items-center gap-1.5">
 							<span
 								className={cn(
-									"truncate text-[13px] leading-tight transition-colors flex-1",
+									"break-words min-w-0 text-[13px] leading-tight transition-colors flex-1",
 									isActive
 										? "text-foreground font-medium"
 										: "text-foreground/80",
 								)}
 							>
-								{isBranchWorkspace ? "local" : name || branch}
+								{isBranchWorkspace
+									? "local"
+									: (worktreePath.split("/").filter(Boolean).pop() ?? name ?? branch)}
 							</span>
 
 							{isBranchWorkspace && aheadBehind && (
@@ -430,21 +432,20 @@ export function WorkspaceListItem({
 							</div>
 						</div>
 
-						{(showBranchSubtitle || pr) && (
+						{isBranchWorkspace && (
+							<span className="text-[11px] text-muted-foreground truncate">
+								{branch}
+							</span>
+						)}
+
+						{pr && (
 							<div className="flex items-center gap-2 text-[11px] w-full">
-								{showBranchSubtitle && (
-									<span className="text-muted-foreground/60 truncate font-mono leading-tight">
-										{branch}
-									</span>
-								)}
-								{pr && (
-									<WorkspaceStatusBadge
-										state={pr.state}
-										prNumber={pr.number}
-										prUrl={pr.url}
-										className="ml-auto"
-									/>
-								)}
+								<WorkspaceStatusBadge
+									state={pr.state}
+									prNumber={pr.number}
+									prUrl={pr.url}
+									className="ml-auto"
+								/>
 							</div>
 						)}
 					</div>
@@ -459,6 +460,7 @@ export function WorkspaceListItem({
 				id={id}
 				projectId={projectId}
 				name={name}
+				worktreePath={worktreePath}
 				isBranchWorkspace={isBranchWorkspace}
 				isUnread={isUnread}
 				workspaceStatus={workspaceStatus}

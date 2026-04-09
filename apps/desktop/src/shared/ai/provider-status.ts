@@ -1,4 +1,4 @@
-export type ProviderId = "anthropic" | "openai";
+export type ProviderId = "anthropic";
 
 export type ProviderConnectionState =
 	| "connected"
@@ -66,7 +66,7 @@ export interface ModelProviderStatus {
 }
 
 export function getProviderName(providerId: ProviderId): string {
-	return providerId === "anthropic" ? "Anthropic" : "OpenAI";
+	return "Anthropic";
 }
 
 export function classifyProviderIssue(params: {
