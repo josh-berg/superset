@@ -138,7 +138,7 @@ export function GroupStrip() {
 		return result;
 	}, [panes]);
 
-	// Sync Electric session titles → tab and pane names for chat panes in this workspace
+	// Sync session titles → tab and pane names for chat panes in this workspace
 	const chatSessionTargets = useMemo(() => {
 		const map = new Map<
 			string,
