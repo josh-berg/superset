@@ -1,5 +1,5 @@
-import { worktrees } from "@superset/local-db";
-import { eq } from "drizzle-orm";
+import { projects, worktrees, workspaces } from "@superset/local-db";
+import { and, eq } from "drizzle-orm";
 import { localDb } from "main/lib/local-db";
 import type { SimpleGit } from "simple-git";
 import { z } from "zod";
@@ -100,22 +100,45 @@ export const createBranchesRouter = () => {
 				}),
 			)
 			.mutation(async ({ input }): Promise<{ success: boolean }> => {
-				const worktree = getRegisteredWorktree(input.worktreePath);
+				assertRegisteredWorktree(input.worktreePath);
 				await gitSwitchBranch(input.worktreePath, input.branch);
 
-				const gitStatus = worktree.gitStatus
-					? { ...worktree.gitStatus, branch: input.branch }
-					: null;
+				// Check if this path is a project mainRepoPath (branch-type workspace)
+				const project = localDb
+					.select()
+					.from(projects)
+					.where(eq(projects.mainRepoPath, input.worktreePath))
+					.get();
 
-				localDb
-					.update(worktrees)
-					.set({
-						branch: input.branch,
-						baseBranch: null,
-						gitStatus,
-					})
-					.where(eq(worktrees.path, input.worktreePath))
-					.run();
+				if (project) {
+					// Update the branch-type workspace's branch in the workspaces table
+					localDb
+						.update(workspaces)
+						.set({ branch: input.branch })
+						.where(
+							and(
+								eq(workspaces.projectId, project.id),
+								eq(workspaces.type, "branch"),
+							),
+						)
+						.run();
+				} else {
+					// It's a worktree — update the worktrees table as before
+					const worktree = getRegisteredWorktree(input.worktreePath);
+					const gitStatus = worktree.gitStatus
+						? { ...worktree.gitStatus, branch: input.branch }
+						: null;
+
+					localDb
+						.update(worktrees)
+						.set({
+							branch: input.branch,
+							baseBranch: null,
+							gitStatus,
+						})
+						.where(eq(worktrees.path, input.worktreePath))
+						.run();
+				}
 
 				clearStatusCacheForWorktree(input.worktreePath);
 				return { success: true };

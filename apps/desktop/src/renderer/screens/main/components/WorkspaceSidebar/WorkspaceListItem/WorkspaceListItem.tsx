@@ -3,7 +3,7 @@ import { toast } from "@superset/ui/sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@superset/ui/tooltip";
 import { cn } from "@superset/ui/utils";
 import { useMatchRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { HiMiniXMark } from "react-icons/hi2";
 import { useCopyToClipboard } from "renderer/hooks/useCopyToClipboard";
 import { HotkeyLabel } from "renderer/hotkeys";
@@ -21,7 +21,7 @@ import { extractPaneIdsFromLayout } from "renderer/stores/tabs/utils";
 import { useWorkspaceSelectionStore } from "renderer/stores/workspace-selection";
 import { getHighestPriorityStatus } from "shared/tabs-types";
 import { CollapsedWorkspaceItem } from "./CollapsedWorkspaceItem";
-import { DeleteWorkspaceDialog } from "./components";
+import { DeleteWorkspaceDialog, SwitchBranchDialog } from "./components";
 import {
 	GITHUB_STATUS_STALE_TIME,
 	MAX_KEYBOARD_SHORTCUT_INDEX,
@@ -155,6 +155,7 @@ export function WorkspaceListItem({
 
 	const { showDeleteDialog, setShowDeleteDialog, handleDeleteClick } =
 		useWorkspaceDeleteHandler();
+	const [showSwitchBranchDialog, setShowSwitchBranchDialog] = useState(false);
 	const { status: localChanges } = useGitChangesStatus({
 		worktreePath,
 		enabled: hasHovered && !!worktreePath,
@@ -433,9 +434,18 @@ export function WorkspaceListItem({
 						</div>
 
 						{isBranchWorkspace && (
-							<span className="text-[11px] text-muted-foreground truncate">
-								{branch}
-							</span>
+							<div className="flex">
+								<button
+									type="button"
+									className="text-[11px] text-muted-foreground truncate cursor-pointer text-left rounded px-1 -mx-1 hover:bg-accent hover:text-foreground transition-colors"
+									onClick={(e) => {
+										e.stopPropagation();
+										setShowSwitchBranchDialog(true);
+									}}
+								>
+									{branch}
+								</button>
+							</div>
 						)}
 
 						{pr && (
@@ -482,6 +492,14 @@ export function WorkspaceListItem({
 				open={showDeleteDialog}
 				onOpenChange={setShowDeleteDialog}
 			/>
+			{isBranchWorkspace && (
+				<SwitchBranchDialog
+					open={showSwitchBranchDialog}
+					onOpenChange={setShowSwitchBranchDialog}
+					worktreePath={worktreePath}
+					currentBranch={branch}
+				/>
+			)}
 		</>
 	);
 }

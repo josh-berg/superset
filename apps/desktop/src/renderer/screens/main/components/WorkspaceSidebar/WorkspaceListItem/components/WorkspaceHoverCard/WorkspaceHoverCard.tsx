@@ -4,7 +4,6 @@ import { formatDistanceToNow } from "date-fns";
 import { FaGithub } from "react-icons/fa";
 import {
 	LuExternalLink,
-	LuGlobe,
 	LuLoaderCircle,
 	LuTriangleAlert,
 } from "react-icons/lu";
@@ -38,7 +37,6 @@ export function WorkspaceHoverCardContent({
 		pr,
 		repoUrl,
 		branchExistsOnRemote,
-		previewUrl,
 		isLoading: isLoadingGithub,
 	} = usePRStatus({ workspaceId, surface: "workspace-hover-card" });
 
@@ -46,20 +44,6 @@ export function WorkspaceHoverCardContent({
 	const hasOpenPRShortcut = !(
 		openPRDisplay.length === 1 && openPRDisplay[0] === "Unassigned"
 	);
-
-	const previewButton = previewUrl ? (
-		<Button
-			variant="outline"
-			size="sm"
-			className="w-full h-7 text-xs gap-1.5"
-			asChild
-		>
-			<a href={previewUrl} target="_blank" rel="noopener noreferrer">
-				<LuGlobe className="size-3" strokeWidth={STROKE_WIDTH} />
-				Open Preview
-			</a>
-		</Button>
-	) : null;
 
 	const needsRebase = worktreeInfo?.gitStatus?.needsRebase;
 	const behindCount = worktreeInfo?.gitStatus?.behind;
@@ -194,14 +178,12 @@ export function WorkspaceHoverCardContent({
 							)}
 						</a>
 					</Button>
-					{previewButton}
 				</div>
 			) : repoUrl ? (
 				<div className="pt-2 border-t border-border space-y-2">
 					<div className="text-xs text-muted-foreground">
 						No PR for this branch
 					</div>
-					{previewButton}
 				</div>
 			) : null}
 		</div>

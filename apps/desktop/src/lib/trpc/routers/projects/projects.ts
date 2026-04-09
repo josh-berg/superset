@@ -301,6 +301,34 @@ function extractRepoName(urlInput: string): string | null {
 	return repoSegment;
 }
 
+/** Returns a map of branch name → where it's checked out ("main" | "worktree"). */
+async function getCheckedOutBranches(
+	repoPath: string,
+): Promise<Map<string, "main" | "worktree">> {
+	const checkedOut = new Map<string, "main" | "worktree">();
+	try {
+		const git = await getSimpleGitWithShellPath(repoPath);
+		const output = await git.raw(["worktree", "list", "--porcelain"]);
+		// Each worktree block is separated by a blank line; the first block is the main worktree.
+		const blocks = output.split(/\n\n+/);
+		for (let i = 0; i < blocks.length; i++) {
+			const block = blocks[i];
+			const branchLine = block
+				.split("\n")
+				.find((l) => l.startsWith("branch "));
+			if (!branchLine) continue;
+			const ref = branchLine.slice("branch ".length).trim();
+			const name = ref.startsWith("refs/heads/")
+				? ref.slice("refs/heads/".length)
+				: ref;
+			if (name) checkedOut.set(name, i === 0 ? "main" : "worktree");
+		}
+	} catch {
+		// Best effort
+	}
+	return checkedOut;
+}
+
 /** Create the tRPC router for project CRUD, branch listing, and git operations. */
 export const createProjectsRouter = (getWindow: () => BrowserWindow | null) => {
 	return router({
@@ -572,6 +600,7 @@ export const createProjectsRouter = (getWindow: () => BrowserWindow | null) => {
 						lastCommitDate: number;
 						isLocal: boolean;
 						isRemote: boolean;
+						checkedOutIn: "main" | "worktree" | null;
 					}>;
 					defaultBranch: string;
 				}> => {
@@ -695,10 +724,15 @@ export const createProjectsRouter = (getWindow: () => BrowserWindow | null) => {
 						}
 					}
 
+					const checkedOutBranches = await getCheckedOutBranches(
+						project.mainRepoPath,
+					);
+
 					const branches = Array.from(branchMap.entries()).map(
 						([name, data]) => ({
 							name,
 							...data,
+							checkedOutIn: checkedOutBranches.get(name) ?? null,
 						}),
 					);
 
@@ -728,6 +762,7 @@ export const createProjectsRouter = (getWindow: () => BrowserWindow | null) => {
 						lastCommitDate: number;
 						isLocal: boolean;
 						isRemote: boolean;
+						checkedOutIn: "main" | "worktree" | null;
 					}>;
 					defaultBranch: string;
 				}> => {
@@ -865,10 +900,15 @@ export const createProjectsRouter = (getWindow: () => BrowserWindow | null) => {
 						}
 					}
 
+					const checkedOutBranches = await getCheckedOutBranches(
+						project.mainRepoPath,
+					);
+
 					const branches = Array.from(branchMap.entries()).map(
 						([name, data]) => ({
 							name,
 							...data,
+							checkedOutIn: checkedOutBranches.get(name) ?? null,
 						}),
 					);
 
