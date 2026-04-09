@@ -1,4 +1,5 @@
 import type { TerminalPreset } from "@superset/local-db";
+import { Button } from "@superset/ui/button";
 import { eq, or } from "@tanstack/db";
 import { useLiveQuery } from "@tanstack/react-db";
 import { useNavigate, useParams } from "@tanstack/react-router";
@@ -10,25 +11,89 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { BsTerminalPlus } from "react-icons/bs";
+import { TbMessageCirclePlus } from "react-icons/tb";
+import {
+	getPresetIcon,
+	useIsDarkTheme,
+} from "renderer/assets/app-icons/preset-icons";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { usePresets } from "renderer/react-query/presets";
 import { useCollections } from "renderer/routes/_authenticated/providers/CollectionsProvider";
+import { WorkspaceRunButton } from "renderer/routes/_authenticated/_dashboard/components/TopBar/components/WorkspaceRunButton";
+import { PRESET_HOTKEY_IDS } from "renderer/routes/_authenticated/_dashboard/workspace/$workspaceId/hooks/usePresetHotkeys";
 import { requestTabClose } from "renderer/stores/editor-state/editorCoordinator";
+import { useSidebarStore } from "renderer/stores/sidebar-state";
 import { useTabsStore } from "renderer/stores/tabs/store";
 import { useTabsWithPresets } from "renderer/stores/tabs/useTabsWithPresets";
 import {
 	isLastPaneInTab,
 	resolveActiveTabIdForWorkspace,
 } from "renderer/stores/tabs/utils";
-import {
-	DEFAULT_SHOW_PRESETS_BAR,
-	DEFAULT_USE_COMPACT_TERMINAL_ADD_BUTTON,
-} from "shared/constants";
 import { type ActivePaneStatus, pickHigherStatus } from "shared/tabs-types";
-import { AddTabButton } from "./components/AddTabButton";
+import { SidebarControl } from "renderer/screens/main/components/SidebarControl";
+import { PresetBarItem } from "../../components/PresetsBar/components/PresetBarItem";
 import { GroupItem } from "./GroupItem";
+import { NewTabDropZone } from "./NewTabDropZone";
 
 const NO_WORKSPACE_MATCH = "__no_workspace__";
+
+function isPresetPinnedToBar(pinnedToBar: boolean | undefined): boolean {
+	return pinnedToBar !== false;
+}
+
+function areStringArraysEqual(left: string[], right: string[]): boolean {
+	if (left.length !== right.length) return false;
+	return left.every((value, index) => value === right[index]);
+}
+
+function getPinnedPresetOrder(
+	presets: Array<{ id: string; pinnedToBar?: boolean }>,
+): string[] {
+	return presets.flatMap((preset) =>
+		isPresetPinnedToBar(preset.pinnedToBar) ? [preset.id] : [],
+	);
+}
+
+function getTargetIndexForPinnedReorder({
+	presets,
+	pinnedPresetIds,
+	presetId,
+	targetPinnedIndex,
+}: {
+	presets: Array<{ id: string }>;
+	pinnedPresetIds: string[];
+	presetId: string;
+	targetPinnedIndex: number;
+}): number | null {
+	const currentIndex = presets.findIndex((preset) => preset.id === presetId);
+	if (currentIndex < 0) return null;
+
+	const previousPinnedId =
+		targetPinnedIndex > 0 ? pinnedPresetIds[targetPinnedIndex - 1] : undefined;
+	const nextPinnedId =
+		targetPinnedIndex < pinnedPresetIds.length - 1
+			? pinnedPresetIds[targetPinnedIndex + 1]
+			: undefined;
+
+	if (nextPinnedId) {
+		const nextIndex = presets.findIndex((preset) => preset.id === nextPinnedId);
+		if (nextIndex < 0) return null;
+		return currentIndex < nextIndex ? nextIndex - 1 : nextIndex;
+	}
+
+	if (previousPinnedId) {
+		const previousIndex = presets.findIndex(
+			(preset) => preset.id === previousPinnedId,
+		);
+		if (previousIndex < 0) return null;
+		const adjustedPreviousIndex =
+			currentIndex < previousIndex ? previousIndex - 1 : previousIndex;
+		return adjustedPreviousIndex + 1;
+	}
+
+	return currentIndex;
+}
 
 export function GroupStrip() {
 	const { workspaceId: activeWorkspaceId } = useParams({ strict: false });
@@ -38,74 +103,75 @@ export function GroupStrip() {
 	const activeTabIds = useTabsStore((s) => s.activeTabIds);
 	const tabHistoryStacks = useTabsStore((s) => s.tabHistoryStacks);
 	const addChatTab = useTabsStore((s) => s.addChatTab);
-	const addBrowserTab = useTabsStore((s) => s.addBrowserTab);
 	const renameTab = useTabsStore((s) => s.renameTab);
 	const setActiveTab = useTabsStore((s) => s.setActiveTab);
 	const movePaneToTab = useTabsStore((s) => s.movePaneToTab);
 	const movePaneToNewTab = useTabsStore((s) => s.movePaneToNewTab);
 	const reorderTabs = useTabsStore((s) => s.reorderTabs);
 	const setPaneStatus = useTabsStore((s) => s.setPaneStatus);
-
 	const setTabAutoTitle = useTabsStore((s) => s.setTabAutoTitle);
 	const setPaneAutoTitle = useTabsStore((s) => s.setPaneAutoTitle);
+
+	const isSidebarOpen = useSidebarStore((s) => s.isSidebarOpen);
 	const navigate = useNavigate();
+	const isDark = useIsDarkTheme();
+
 	const { data: workspace } = electronTrpc.workspaces.get.useQuery(
 		{ id: activeWorkspaceId ?? "" },
 		{ enabled: !!activeWorkspaceId },
 	);
-	const { addTab, openPreset } = useTabsWithPresets(workspace?.projectId);
-	const { matchedPresets: presets } = usePresets(workspace?.projectId);
 
-	const scrollContainerRef = useRef<HTMLDivElement>(null);
-	const tabsTrackRef = useRef<HTMLDivElement>(null);
-	const [hasHorizontalOverflow, setHasHorizontalOverflow] = useState(false);
-	const utils = electronTrpc.useUtils();
-	const { data: showPresetsBar } =
-		electronTrpc.settings.getShowPresetsBar.useQuery();
-	const { data: useCompactTerminalAddButton } =
-		electronTrpc.settings.getUseCompactTerminalAddButton.useQuery();
-	const setShowPresetsBar = electronTrpc.settings.setShowPresetsBar.useMutation(
-		{
-			onMutate: async ({ enabled }) => {
-				await utils.settings.getShowPresetsBar.cancel();
-				const previous = utils.settings.getShowPresetsBar.getData();
-				utils.settings.getShowPresetsBar.setData(undefined, enabled);
-				return { previous };
-			},
-			onError: (_err, _vars, context) => {
-				if (context?.previous !== undefined) {
-					utils.settings.getShowPresetsBar.setData(undefined, context.previous);
-				}
-			},
-			onSettled: () => {
-				utils.settings.getShowPresetsBar.invalidate();
-			},
-		},
+	const { addTab, openPreset, openPresetInCurrentTerminal } =
+		useTabsWithPresets(workspace?.projectId);
+	const { presets, matchedPresets, reorderPresets } = usePresets(
+		workspace?.projectId,
 	);
-	const setUseCompactTerminalAddButton =
-		electronTrpc.settings.setUseCompactTerminalAddButton.useMutation({
-			onMutate: async ({ enabled }) => {
-				await utils.settings.getUseCompactTerminalAddButton.cancel();
-				const previous =
-					utils.settings.getUseCompactTerminalAddButton.getData();
-				utils.settings.getUseCompactTerminalAddButton.setData(
-					undefined,
-					enabled,
-				);
-				return { previous };
-			},
-			onError: (_err, _vars, context) => {
-				if (context?.previous !== undefined) {
-					utils.settings.getUseCompactTerminalAddButton.setData(
-						undefined,
-						context.previous,
-					);
-				}
-			},
-			onSettled: () => {
-				utils.settings.getUseCompactTerminalAddButton.invalidate();
-			},
+
+	// Pinned preset ordering state
+	const [localPinnedPresetIds, setLocalPinnedPresetIds] = useState<string[]>(
+		() => getPinnedPresetOrder(matchedPresets),
+	);
+
+	const pinnedPresets = useMemo(() => {
+		const presetById = new Map(
+			matchedPresets.map((preset, index) => [preset.id, { preset, index }]),
+		);
+		const orderedPinnedPresets: Array<{
+			preset: (typeof matchedPresets)[number];
+			index: number;
+		}> = [];
+		const seenIds = new Set<string>();
+
+		for (const presetId of localPinnedPresetIds) {
+			const item = presetById.get(presetId);
+			if (!item) continue;
+			if (!isPresetPinnedToBar(item.preset.pinnedToBar)) continue;
+			orderedPinnedPresets.push(item);
+			seenIds.add(presetId);
+		}
+
+		for (const [index, preset] of matchedPresets.entries()) {
+			if (!isPresetPinnedToBar(preset.pinnedToBar)) continue;
+			if (seenIds.has(preset.id)) continue;
+			orderedPinnedPresets.push({ preset, index });
+		}
+
+		return orderedPinnedPresets;
+	}, [matchedPresets, localPinnedPresetIds]);
+
+	const canOpenInCurrentTerminal = useTabsStore((state) => {
+		if (!activeWorkspaceId) return false;
+		const activeTabId = resolveActiveTabIdForWorkspace({
+			workspaceId: activeWorkspaceId,
+			tabs: state.tabs,
+			activeTabIds: state.activeTabIds,
+			tabHistoryStacks: state.tabHistoryStacks,
 		});
+		if (!activeTabId) return false;
+		const paneId = state.focusedPaneIds[activeTabId];
+		if (!paneId) return false;
+		return state.panes[paneId]?.type === "terminal";
+	});
 
 	const tabs = useMemo(
 		() =>
@@ -125,7 +191,6 @@ export function GroupStrip() {
 		});
 	}, [activeWorkspaceId, activeTabIds, allTabs, tabHistoryStacks]);
 
-	// Compute aggregate status per tab using shared priority logic
 	const tabStatusMap = useMemo(() => {
 		const result = new Map<string, ActivePaneStatus>();
 		for (const pane of Object.values(panes)) {
@@ -160,6 +225,7 @@ export function GroupStrip() {
 		}
 		return map;
 	}, [panes, tabs]);
+
 	const targetSessionIds = useMemo(
 		() => Array.from(chatSessionTargets.keys()),
 		[chatSessionTargets],
@@ -217,6 +283,16 @@ export function GroupStrip() {
 		shouldSyncChatTitles,
 	]);
 
+	// Sync pinned preset order from server
+	useEffect(() => {
+		const serverPinnedPresetIds = getPinnedPresetOrder(matchedPresets);
+		setLocalPinnedPresetIds((current) =>
+			areStringArraysEqual(current, serverPinnedPresetIds)
+				? current
+				: serverPinnedPresetIds,
+		);
+	}, [matchedPresets]);
+
 	const handleAddGroup = () => {
 		if (!activeWorkspaceId) return;
 		addTab(activeWorkspaceId);
@@ -227,11 +303,6 @@ export function GroupStrip() {
 		addChatTab(activeWorkspaceId);
 	};
 
-	const handleAddBrowser = () => {
-		if (!activeWorkspaceId) return;
-		addBrowserTab(activeWorkspaceId);
-	};
-
 	const handleOpenPreset = useCallback(
 		(preset: TerminalPreset) => {
 			if (!activeWorkspaceId) return;
@@ -240,14 +311,85 @@ export function GroupStrip() {
 		[activeWorkspaceId, openPreset],
 	);
 
-	const handleOpenPresetsSettings = useCallback(() => {
-		navigate({ to: "/settings/presets" });
-	}, [navigate]);
+	const handleOpenPresetInCurrentTerminal = useCallback(
+		(preset: TerminalPreset) => {
+			if (!activeWorkspaceId) return;
+			openPresetInCurrentTerminal(activeWorkspaceId, preset);
+		},
+		[activeWorkspaceId, openPresetInCurrentTerminal],
+	);
+
+	const handleOpenPresetInNewTab = useCallback(
+		(preset: TerminalPreset) => {
+			if (!activeWorkspaceId) return;
+			openPreset(activeWorkspaceId, preset, { target: "new-tab" });
+		},
+		[activeWorkspaceId, openPreset],
+	);
+
+	const handleOpenPresetInPane = useCallback(
+		(preset: TerminalPreset) => {
+			if (!activeWorkspaceId) return;
+			openPreset(activeWorkspaceId, preset, {
+				target: "active-tab",
+				modeOverride: "split-pane",
+			});
+		},
+		[activeWorkspaceId, openPreset],
+	);
+
+	const handleEditPreset = useCallback(
+		(preset: TerminalPreset) => {
+			navigate({
+				to: "/settings/terminal",
+				search: { editPresetId: preset.id },
+			});
+		},
+		[navigate],
+	);
+
+	const handleLocalPinnedReorder = useCallback(
+		(fromIndex: number, toIndex: number) => {
+			setLocalPinnedPresetIds((current) => {
+				if (
+					fromIndex < 0 ||
+					fromIndex >= current.length ||
+					toIndex < 0 ||
+					toIndex >= current.length
+				) {
+					return current;
+				}
+				const next = [...current];
+				const [moved] = next.splice(fromIndex, 1);
+				next.splice(toIndex, 0, moved);
+				return next;
+			});
+		},
+		[],
+	);
+
+	const handlePersistPinnedReorder = useCallback(
+		(presetId: string, targetPinnedIndex: number) => {
+			const reorderedPinnedPresetIds = [...localPinnedPresetIds];
+			const currentPinnedIndex = reorderedPinnedPresetIds.indexOf(presetId);
+			if (currentPinnedIndex === -1) return;
+			const [moved] = reorderedPinnedPresetIds.splice(currentPinnedIndex, 1);
+			reorderedPinnedPresetIds.splice(targetPinnedIndex, 0, moved);
+
+			const targetIndex = getTargetIndexForPinnedReorder({
+				presets,
+				pinnedPresetIds: reorderedPinnedPresetIds,
+				presetId,
+				targetPinnedIndex,
+			});
+			if (targetIndex === null) return;
+			reorderPresets.mutate({ presetId, targetIndex });
+		},
+		[presets, localPinnedPresetIds, reorderPresets],
+	);
 
 	const handleSelectGroup = (tabId: string) => {
-		if (activeWorkspaceId) {
-			setActiveTab(activeWorkspaceId, tabId);
-		}
+		if (activeWorkspaceId) setActiveTab(activeWorkspaceId, tabId);
 	};
 
 	const handleCloseGroup = (tabId: string) => {
@@ -276,18 +418,22 @@ export function GroupStrip() {
 	);
 
 	const checkIsLastPaneInTab = useCallback((paneId: string) => {
-		// Get fresh panes from store to avoid stale closure issues during drag-drop
 		const freshPanes = useTabsStore.getState().panes;
 		const pane = freshPanes[paneId];
 		if (!pane) return true;
 		return isLastPaneInTab(freshPanes, pane.tabId);
 	}, []);
 
+	// Overflow detection for tabs bar
+	const scrollContainerRef = useRef<HTMLDivElement>(null);
+	const tabsTrackRef = useRef<HTMLDivElement>(null);
+	const [hasTabOverflow, setHasTabOverflow] = useState(false);
+
 	const updateOverflow = useCallback(() => {
 		const container = scrollContainerRef.current;
 		const track = tabsTrackRef.current;
 		if (!container || !track) return;
-		setHasHorizontalOverflow(track.scrollWidth > container.clientWidth + 1);
+		setHasTabOverflow(track.scrollWidth > container.clientWidth + 1);
 	}, []);
 
 	useLayoutEffect(() => {
@@ -311,78 +457,100 @@ export function GroupStrip() {
 		requestAnimationFrame(updateOverflow);
 	}, [updateOverflow]);
 
-	const useCompactAddButton =
-		useCompactTerminalAddButton ?? DEFAULT_USE_COMPACT_TERMINAL_ADD_BUTTON;
-
-	const plusControl = (
-		<AddTabButton
-			useCompactAddButton={useCompactAddButton}
-			showPresetsBar={showPresetsBar ?? DEFAULT_SHOW_PRESETS_BAR}
-			presets={presets}
-			onDropToNewTab={movePaneToNewTab}
-			isLastPaneInTab={checkIsLastPaneInTab}
-			onAddTerminal={handleAddGroup}
-			onAddChat={handleAddChat}
-			onAddBrowser={handleAddBrowser}
-			onOpenPreset={handleOpenPreset}
-			onConfigurePresets={handleOpenPresetsSettings}
-			onToggleShowPresetsBar={(enabled) =>
-				setShowPresetsBar.mutate({ enabled })
-			}
-			onToggleCompactAddButton={(enabled) =>
-				setUseCompactTerminalAddButton.mutate({ enabled })
-			}
-		/>
-	);
-
 	return (
-		<div className="flex h-10 min-w-0 flex-1 items-stretch">
-			<div
-				ref={scrollContainerRef}
-				className="flex min-w-0 flex-1 items-stretch overflow-x-auto overflow-y-hidden"
-				style={{ scrollbarWidth: "none" }}
-			>
-				<div ref={tabsTrackRef} className="flex items-stretch">
-					{tabs.length > 0 && (
-						<div className="flex items-stretch h-full shrink-0">
-							{tabs.map((tab, index) => {
-								return (
-									<div
-										key={tab.id}
-										className="h-full shrink-0"
-										style={{ width: "160px" }}
-									>
-										<GroupItem
-											tab={tab}
-											index={index}
-											isActive={tab.id === activeTabId}
-											status={tabStatusMap.get(tab.id) ?? null}
-											onSelect={() => handleSelectGroup(tab.id)}
-											onClose={() => handleCloseGroup(tab.id)}
-											onRename={(newName) => handleRenameGroup(tab.id, newName)}
-											onMarkAsUnread={() => handleMarkTabAsUnread(tab.id)}
-											onPaneDrop={(paneId) => movePaneToTab(paneId, tab.id)}
-											onReorder={handleReorderTabs}
-										/>
-									</div>
-								);
-							})}
-						</div>
-					)}
-					{hasHorizontalOverflow ? (
-						<div
-							className={`h-full shrink-0 ${
-								!useCompactAddButton ? "w-[220px]" : "w-10"
-							}`}
+		<div className="flex flex-col shrink-0 bg-background">
+			{/* Action bar: Terminal | Chat | presets… ··· SidebarControl | RunButton */}
+			<div className="flex h-10 items-center border-b border-border shrink-0">
+				<NewTabDropZone
+					onDrop={movePaneToNewTab}
+					isLastPaneInTab={checkIsLastPaneInTab}
+				>
+					<div
+						className="flex items-center gap-0.5 flex-1 px-1 overflow-x-auto"
+						style={{ scrollbarWidth: "none" }}
+					>
+						<Button
+							variant="ghost"
+							className="h-7 rounded-r-none pl-2 pr-1.5 gap-1 text-xs border border-border/60 bg-muted/30 text-muted-foreground hover:bg-accent/60 hover:text-foreground shrink-0"
+							onClick={handleAddGroup}
+						>
+							<BsTerminalPlus className="size-3.5" />
+							Terminal
+						</Button>
+						<Button
+							variant="ghost"
+							className="h-7 rounded-l-none border border-l-0 border-border/60 bg-muted/30 px-1.5 gap-1 text-xs text-muted-foreground hover:bg-accent/60 hover:text-foreground shrink-0"
+							onClick={handleAddChat}
+						>
+							<TbMessageCirclePlus className="size-3.5" />
+							Chat
+						</Button>
+						{pinnedPresets.map(({ preset, index }, pinnedIndex) => {
+							const hotkeyId = PRESET_HOTKEY_IDS[index];
+							return (
+								<PresetBarItem
+									key={preset.id}
+									preset={preset}
+									pinnedIndex={pinnedIndex}
+									hotkeyId={hotkeyId}
+									isDark={isDark}
+									canOpen={!!activeWorkspaceId}
+									canOpenInCurrentTerminal={canOpenInCurrentTerminal}
+									onOpenDefault={handleOpenPreset}
+									onOpenInCurrentTerminal={handleOpenPresetInCurrentTerminal}
+									onOpenInNewTab={handleOpenPresetInNewTab}
+									onOpenInPane={handleOpenPresetInPane}
+									onEdit={handleEditPreset}
+									onLocalReorder={handleLocalPinnedReorder}
+									onPersistReorder={handlePersistPinnedReorder}
+								/>
+							);
+						})}
+					</div>
+				</NewTabDropZone>
+				<div className="flex items-center gap-2 px-2 shrink-0 border-l border-border h-full">
+					{!isSidebarOpen && <SidebarControl />}
+					{activeWorkspaceId && (
+						<WorkspaceRunButton
+							projectId={workspace?.projectId ?? workspace?.project?.id}
+							workspaceId={activeWorkspaceId}
+							worktreePath={workspace?.worktreePath}
 						/>
-					) : (
-						<div className="shrink-0">{plusControl}</div>
 					)}
 				</div>
 			</div>
-			{hasHorizontalOverflow && (
-				<div className="shrink-0 bg-background/95 pr-1">{plusControl}</div>
-			)}
+
+			{/* Tabs bar */}
+			<div className="flex h-10 min-w-0 items-stretch border-b border-border shrink-0">
+				<div
+					ref={scrollContainerRef}
+					className="flex min-w-0 flex-1 items-stretch overflow-x-auto overflow-y-hidden"
+					style={{ scrollbarWidth: "none" }}
+				>
+					<div ref={tabsTrackRef} className="flex items-stretch">
+						{tabs.map((tab, index) => (
+							<div
+								key={tab.id}
+								className="h-full shrink-0"
+								style={{ width: "160px" }}
+							>
+								<GroupItem
+									tab={tab}
+									index={index}
+									isActive={tab.id === activeTabId}
+									status={tabStatusMap.get(tab.id) ?? null}
+									onSelect={() => handleSelectGroup(tab.id)}
+									onClose={() => handleCloseGroup(tab.id)}
+									onRename={(newName) => handleRenameGroup(tab.id, newName)}
+									onMarkAsUnread={() => handleMarkTabAsUnread(tab.id)}
+									onPaneDrop={(paneId) => movePaneToTab(paneId, tab.id)}
+									onReorder={handleReorderTabs}
+								/>
+							</div>
+						))}
+					</div>
+				</div>
+			</div>
 		</div>
 	);
 }

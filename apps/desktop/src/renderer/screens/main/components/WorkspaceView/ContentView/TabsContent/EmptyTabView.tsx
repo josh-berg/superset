@@ -4,7 +4,7 @@ import { useCallback, useMemo } from "react";
 import type { IconType } from "react-icons";
 import { BsTerminalPlus } from "react-icons/bs";
 import { LuExternalLink, LuSearch, LuTrash2 } from "react-icons/lu";
-import { TbMessageCirclePlus, TbWorld } from "react-icons/tb";
+import { TbMessageCirclePlus } from "react-icons/tb";
 import { getAppOption } from "renderer/components/OpenInExternalDropdown";
 import { useHotkeyDisplay } from "renderer/hotkeys";
 import { electronTrpc } from "renderer/lib/electron-trpc";
@@ -39,7 +39,6 @@ export function EmptyTabView({
 		from: "/_authenticated/_dashboard/workspace/$workspaceId/",
 	});
 	const addChatTab = useTabsStore((s) => s.addChatTab);
-	const addBrowserTab = useTabsStore((s) => s.addBrowserTab);
 	const activeTheme = useTheme();
 
 	const { data: workspace } = electronTrpc.workspaces.get.useQuery({
@@ -52,7 +51,6 @@ export function EmptyTabView({
 	const { keys: newGroupDisplay } = useHotkeyDisplay("NEW_GROUP");
 	const { keys: newChatDisplay } = useHotkeyDisplay("NEW_CHAT");
 	const { keys: quickOpenDisplay } = useHotkeyDisplay("QUICK_OPEN");
-	const { keys: newBrowserDisplay } = useHotkeyDisplay("NEW_BROWSER");
 	const { keys: openInAppDisplay } = useHotkeyDisplay("OPEN_IN_APP");
 	const resolvedExternalApp: ExternalApp = defaultExternalApp ?? "cursor";
 
@@ -63,10 +61,6 @@ export function EmptyTabView({
 	const handleNewAgent = useCallback(() => {
 		addChatTab(workspaceId);
 	}, [addChatTab, workspaceId]);
-
-	const handleOpenBrowser = useCallback(() => {
-		addBrowserTab(workspaceId);
-	}, [addBrowserTab, workspaceId]);
 
 	const openInActionLabel = useMemo(() => {
 		const appOption = getAppOption(resolvedExternalApp);
@@ -92,14 +86,6 @@ export function EmptyTabView({
 			},
 		];
 
-		baseActions.push({
-			id: "open-browser",
-			label: "Open Browser",
-			display: newBrowserDisplay,
-			icon: TbWorld,
-			onClick: handleOpenBrowser,
-		});
-
 		if (openInActionLabel) {
 			baseActions.push({
 				id: "open-in-app",
@@ -121,9 +107,7 @@ export function EmptyTabView({
 		return baseActions;
 	}, [
 		handleNewAgent,
-		handleOpenBrowser,
 		handleShowTerminal,
-		newBrowserDisplay,
 		newChatDisplay,
 		newGroupDisplay,
 		openInActionLabel,

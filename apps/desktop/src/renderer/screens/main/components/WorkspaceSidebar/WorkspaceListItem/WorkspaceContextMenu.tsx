@@ -42,6 +42,7 @@ interface WorkspaceContextMenuProps {
 	id: string;
 	projectId: string;
 	name: string;
+	worktreePath: string;
 	isBranchWorkspace: boolean;
 	isUnread: boolean;
 	workspaceStatus: string | null | undefined;
@@ -60,6 +61,7 @@ export function WorkspaceContextMenu({
 	id,
 	projectId,
 	name,
+	worktreePath,
 	isBranchWorkspace,
 	isUnread,
 	workspaceStatus,
@@ -239,7 +241,11 @@ export function WorkspaceContextMenu({
 				</ContextMenuContent>
 			</ContextMenu>
 			<HoverCardContent side="right" align="start" className="w-72">
-				<WorkspaceHoverCardContent workspaceId={id} workspaceAlias={name} />
+				<WorkspaceHoverCardContent
+					workspaceId={id}
+					workspaceAlias={name}
+					worktreePath={worktreePath}
+				/>
 			</HoverCardContent>
 		</HoverCard>
 	);

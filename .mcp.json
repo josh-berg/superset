@@ -4,20 +4,7 @@
 			"type": "http",
 			"url": "https://api.superset.sh/api/agent/mcp"
 		},
-		"expo-mcp": {
-			"type": "http",
-			"url": "https://mcp.expo.dev/mcp",
-			"enabled": false
-		},
-		"maestro": {
-			"command": "maestro",
-			"args": ["mcp"]
-		},
-		"neon": {
-			"type": "http",
-			"url": "https://mcp.neon.tech/mcp"
-		},
-		"linear": {
+"linear": {
 			"type": "http",
 			"url": "https://mcp.linear.app/mcp"
 		},

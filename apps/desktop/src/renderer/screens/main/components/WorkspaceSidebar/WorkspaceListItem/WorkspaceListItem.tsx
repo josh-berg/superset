@@ -378,7 +378,9 @@ export function WorkspaceListItem({
 										: "text-foreground/80",
 								)}
 							>
-								{isBranchWorkspace ? "local" : name || branch}
+								{isBranchWorkspace
+									? "local"
+									: (worktreePath.split("/").filter(Boolean).pop() ?? name ?? branch)}
 							</span>
 
 							{isBranchWorkspace && aheadBehind && (
@@ -459,6 +461,7 @@ export function WorkspaceListItem({
 				id={id}
 				projectId={projectId}
 				name={name}
+				worktreePath={worktreePath}
 				isBranchWorkspace={isBranchWorkspace}
 				isUnread={isUnread}
 				workspaceStatus={workspaceStatus}

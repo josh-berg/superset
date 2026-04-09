@@ -64,9 +64,7 @@ export function WorkspaceSidebarFooter({
 				onClick={handleClick}
 				className="group flex items-center gap-2 px-2 py-1.5 w-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-md transition-colors"
 			>
-				<div className="flex items-center justify-center size-5 rounded bg-accent">
-					<LuPlus className="size-3" strokeWidth={STROKE_WIDTH_THICK} />
-				</div>
+				<LuPlus className="size-4" strokeWidth={STROKE_WIDTH_THICK} />
 				<span className="flex-1 text-left">New Workspace</span>
 				<span className="text-[10px] text-muted-foreground/40 group-hover:text-muted-foreground/80 transition-colors font-mono tabular-nums shrink-0">
 					{shortcutText}
