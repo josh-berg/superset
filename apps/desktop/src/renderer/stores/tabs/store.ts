@@ -11,7 +11,7 @@ import {
 	pathsMatch,
 	retargetAbsolutePath,
 } from "shared/absolute-paths";
-import { acknowledgedStatus } from "shared/tabs-types";
+import { acknowledgedStatus, type DiffLayout } from "shared/tabs-types";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 import {
@@ -953,10 +953,85 @@ export const useTabsStore = create<TabsStore>()(
 					// No reusable pane found, create a new one
 					if (options.openInNewTab) {
 						const workspaceId = activeTab.workspaceId;
+
+						// Before creating a new tab, check if there's an unpinned file-viewer
+						// pane in any other workspace tab (preview tab from a previous sidebar click).
+						// If found, reuse it so sidebar navigation doesn't spawn a new tab every time.
+						const workspaceTabs = state.tabs.filter(
+							(t) => t.workspaceId === workspaceId,
+						);
+						for (const tab of workspaceTabs) {
+							const paneIds = extractPaneIdsFromLayout(tab.layout);
+							const previewPane = paneIds
+								.map((id) => state.panes[id])
+								.find(
+									(p) =>
+										p?.type === "file-viewer" &&
+										p.fileViewer &&
+										!p.fileViewer.isPinned,
+								);
+							if (previewPane?.fileViewer) {
+								const existingFileViewer = previewPane.fileViewer;
+								const fileName =
+									options.displayName || getPathBaseName(options.filePath);
+								const viewMode = resolveFileViewerMode({
+									filePath: options.filePath,
+									diffCategory: options.diffCategory,
+									viewMode: options.viewMode,
+									fileStatus: options.fileStatus,
+								});
+								const isSameFile =
+									pathsMatch(existingFileViewer.filePath, options.filePath) &&
+									existingFileViewer.diffCategory === options.diffCategory &&
+									existingFileViewer.commitHash === options.commitHash;
+
+								const nextPanes = {
+									...state.panes,
+									[previewPane.id]: {
+										...previewPane,
+										name: isSameFile ? previewPane.name : fileName,
+										fileViewer: isSameFile
+											? existingFileViewer
+											: {
+													filePath: options.filePath,
+													viewMode,
+													isPinned: false,
+													diffLayout: "inline" as DiffLayout,
+													diffCategory: options.diffCategory,
+													commitHash: options.commitHash,
+													oldPath: options.oldPath,
+													initialLine: options.line,
+													initialColumn: options.column,
+													displayName: options.displayName,
+												},
+									},
+								};
+								const activationState = activatePaneInWorkspace({
+									workspaceId,
+									paneId: previewPane.id,
+									tabs: state.tabs,
+									panes: nextPanes,
+									activeTabIds: state.activeTabIds,
+									focusedPaneIds: state.focusedPaneIds,
+									tabHistoryStacks: state.tabHistoryStacks,
+								});
+								set({
+									...(activationState ?? {}),
+									panes: nextPanes,
+									tabs: state.tabs.map((t) =>
+										t.id === tab.id
+											? { ...t, name: deriveTabName(nextPanes, tab.id) }
+											: t,
+									),
+								});
+								return previewPane.id;
+							}
+						}
+
 						const newTabId = generateId("tab");
 						const newPane = createFileViewerPane(newTabId, {
 							...options,
-							isPinned: true,
+							isPinned: false,
 						});
 
 						const newTab = {
