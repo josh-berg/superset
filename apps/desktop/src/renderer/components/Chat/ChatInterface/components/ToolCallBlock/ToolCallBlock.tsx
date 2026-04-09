@@ -20,26 +20,18 @@ import {
 } from "../../utils/tool-helpers";
 import { ReadOnlyToolCall } from "../ReadOnlyToolCall";
 import { AskUserQuestionToolCall } from "./components/AskUserQuestionToolCall";
-import { CreateTaskToolCall } from "./components/CreateTaskToolCall";
 import { CreateWorkspaceToolCall } from "./components/CreateWorkspaceToolCall";
-import { DeleteTaskToolCall } from "./components/DeleteTaskToolCall";
 import { DeleteWorkspaceToolCall } from "./components/DeleteWorkspaceToolCall";
 import { EditToolExpandedDiff } from "./components/EditToolExpandedDiff";
 import { GenericToolCall } from "./components/GenericToolCall";
 import { GetAppContextToolCall } from "./components/GetAppContextToolCall";
-import { GetTaskToolCall } from "./components/GetTaskToolCall";
 import { GetWorkspaceDetailsToolCall } from "./components/GetWorkspaceDetailsToolCall";
-import { ListDevicesToolCall } from "./components/ListDevicesToolCall";
-import { ListMembersToolCall } from "./components/ListMembersToolCall";
 import { ListProjectsToolCall } from "./components/ListProjectsToolCall";
-import { ListTaskStatusesToolCall } from "./components/ListTaskStatusesToolCall";
-import { ListTasksToolCall } from "./components/ListTasksToolCall";
 import { ListWorkspacesToolCall } from "./components/ListWorkspacesToolCall";
 import { StartAgentSessionToolCall } from "./components/StartAgentSessionToolCall";
 import { SubagentToolCall } from "./components/SubagentToolCall";
 import { SupersetToolCall } from "./components/SupersetToolCall";
 import { SwitchWorkspaceToolCall } from "./components/SwitchWorkspaceToolCall";
-import { UpdateTaskToolCall } from "./components/UpdateTaskToolCall";
 import { UpdateWorkspaceToolCall } from "./components/UpdateWorkspaceToolCall";
 import { getExecuteCommandViewModel } from "./utils/getExecuteCommandViewModel";
 import { getWebSearchViewModel } from "./utils/getWebSearchViewModel";
@@ -489,38 +481,6 @@ export function ToolCallBlock({
 	}
 
 	// --- Superset MCP tools ---
-	if (toolName === "create_task") {
-		return <CreateTaskToolCall part={part} />;
-	}
-
-	if (toolName === "update_task") {
-		return <UpdateTaskToolCall part={part} />;
-	}
-
-	if (toolName === "list_tasks") {
-		return <ListTasksToolCall part={part} />;
-	}
-
-	if (toolName === "get_task") {
-		return <GetTaskToolCall part={part} />;
-	}
-
-	if (toolName === "delete_task") {
-		return <DeleteTaskToolCall part={part} />;
-	}
-
-	if (toolName === "list_task_statuses") {
-		return <ListTaskStatusesToolCall part={part} />;
-	}
-
-	if (toolName === "list_members") {
-		return <ListMembersToolCall part={part} />;
-	}
-
-	if (toolName === "list_devices") {
-		return <ListDevicesToolCall part={part} />;
-	}
-
 	if (toolName === "list_workspaces") {
 		return <ListWorkspacesToolCall part={part} />;
 	}

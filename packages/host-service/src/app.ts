@@ -6,7 +6,6 @@ import { Octokit } from "@octokit/rest";
 import type { MiddlewareHandler } from "hono";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { createApiClient } from "./api";
 import { createDb } from "./db";
 import { EventBus, registerEventBusRoute } from "./events";
 import type { ApiAuthProvider } from "./providers/auth";
@@ -29,7 +28,6 @@ export interface CreateAppOptions {
 	modelProviderRuntimeResolver?: ModelProviderRuntimeResolver;
 	auth?: ApiAuthProvider;
 	hostAuth?: HostAuthProvider;
-	cloudApiUrl?: string;
 	dbPath?: string;
 	deviceClientId?: string;
 	deviceName?: string;
@@ -45,11 +43,6 @@ export interface CreateAppResult {
 
 export function createApp(options?: CreateAppOptions): CreateAppResult {
 	const credentials = options?.credentials ?? new LocalGitCredentialProvider();
-
-	const api =
-		options?.auth && options?.cloudApiUrl
-			? createApiClient(options.cloudApiUrl, options.auth)
-			: null;
 
 	const dbPath = options?.dbPath ?? join(homedir(), ".superset", "host.db");
 	const db = createDb(dbPath);
@@ -129,7 +122,6 @@ export function createApp(options?: CreateAppOptions): CreateAppResult {
 				return {
 					git,
 					github,
-					api,
 					db,
 					runtime,
 					deviceClientId: options?.deviceClientId ?? null,

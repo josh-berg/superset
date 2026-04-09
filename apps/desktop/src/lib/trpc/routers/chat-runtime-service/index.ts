@@ -45,10 +45,6 @@ function handleLifecycleEvent(event: LifecycleEvent): void {
 }
 
 const service = new ChatRuntimeService({
-	headers: async (): Promise<Record<string, string>> => {
-		return {};
-	},
-	apiUrl: env.NEXT_PUBLIC_API_URL,
 	onLifecycleEvent: handleLifecycleEvent,
 });
 

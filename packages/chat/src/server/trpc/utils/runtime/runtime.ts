@@ -1,5 +1,3 @@
-import type { AppRouter } from "@superset/trpc";
-import type { createTRPCClient } from "@trpc/client";
 import type { createMastraCode } from "mastracode";
 import { generateTitleFromMessage } from "../../../desktop";
 import type { ThinkingLevel } from "../../zod";
@@ -39,7 +37,6 @@ export function syncRuntimeHookSessionId(runtime: RuntimeSession): void {
 	runtime.hookManager?.setSessionId(runtime.sessionId);
 }
 
-type ApiClient = ReturnType<typeof createTRPCClient<AppRouter>>;
 
 interface TextContentPart {
 	type: "text";
@@ -439,7 +436,6 @@ function extractTextContent(parts: MessageLike["content"]): string {
 
 export async function generateAndSetTitle(
 	runtime: RuntimeSession,
-	apiClient: ApiClient,
 	options?: {
 		submittedUserMessage?: string;
 	},
@@ -501,10 +497,7 @@ export async function generateAndSetTitle(
 		});
 		if (!title?.trim()) return;
 
-		await apiClient.chat.updateTitle.mutate({
-			sessionId: runtime.sessionId,
-			title: title.trim(),
-		});
+		// Local-only: title update is a no-op (no cloud API to persist to)
 	} catch (error) {
 		console.warn("[chat] Title generation failed:", error);
 	}

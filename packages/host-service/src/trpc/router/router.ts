@@ -1,6 +1,5 @@
 import { router } from "../index";
 import { chatRouter } from "./chat";
-import { cloudRouter } from "./cloud";
 import { filesystemRouter } from "./filesystem";
 import { gitRouter } from "./git";
 import { githubRouter } from "./github";
@@ -15,7 +14,6 @@ export const appRouter = router({
 	filesystem: filesystemRouter,
 	git: gitRouter,
 	github: githubRouter,
-	cloud: cloudRouter,
 	pullRequests: pullRequestsRouter,
 	project: projectRouter,
 	workspace: workspaceRouter,

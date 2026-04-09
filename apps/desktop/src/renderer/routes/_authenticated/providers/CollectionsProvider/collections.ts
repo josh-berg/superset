@@ -1,20 +1,4 @@
 import type {
-	SelectAgentCommand,
-	SelectChatSession,
-	SelectGithubPullRequest,
-	SelectGithubRepository,
-	SelectProject,
-	SelectTask,
-	SelectTaskStatus,
-	SelectUser,
-	SelectV2Client,
-	SelectV2Host,
-	SelectV2Project,
-	SelectV2UsersHosts,
-	SelectV2Workspace,
-	SelectWorkspace,
-} from "@superset/db/schema";
-import type {
 	Collection,
 	LocalStorageCollectionUtils,
 } from "@tanstack/react-db";
@@ -33,21 +17,16 @@ import {
 	workspaceLocalStateSchema,
 } from "./dashboardSidebarLocal";
 
+export interface ChatSession {
+	id: string;
+	title: string | null;
+	workspaceId: string | null;
+	lastActiveAt: Date | string | null;
+	createdAt: Date | string;
+}
+
 export interface OrgCollections {
-	tasks: Collection<SelectTask>;
-	taskStatuses: Collection<SelectTaskStatus>;
-	projects: Collection<SelectProject>;
-	v2Hosts: Collection<SelectV2Host>;
-	v2Clients: Collection<SelectV2Client>;
-	v2UsersHosts: Collection<SelectV2UsersHosts>;
-	v2Projects: Collection<SelectV2Project>;
-	v2Workspaces: Collection<SelectV2Workspace>;
-	workspaces: Collection<SelectWorkspace>;
-	users: Collection<SelectUser>;
-	agentCommands: Collection<SelectAgentCommand>;
-	chatSessions: Collection<SelectChatSession>;
-	githubRepositories: Collection<SelectGithubRepository>;
-	githubPullRequests: Collection<SelectGithubPullRequest>;
+	chatSessions: Collection<ChatSession>;
 	v2SidebarProjects: Collection<
 		DashboardSidebarProjectRow,
 		string,
@@ -75,100 +54,9 @@ export interface OrgCollections {
 const collectionsCache = new Map<string, OrgCollections>();
 
 function createOrgCollections(organizationId: string): OrgCollections {
-	const tasks = createCollection(
-		localOnlyCollectionOptions<SelectTask>({
-			id: `tasks-${organizationId}`,
-			getKey: (item) => item.id,
-		}),
-	);
-
-	const taskStatuses = createCollection(
-		localOnlyCollectionOptions<SelectTaskStatus>({
-			id: `task_statuses-${organizationId}`,
-			getKey: (item) => item.id,
-		}),
-	);
-
-	const projects = createCollection(
-		localOnlyCollectionOptions<SelectProject>({
-			id: `projects-${organizationId}`,
-			getKey: (item) => item.id,
-		}),
-	);
-
-	const v2Projects = createCollection(
-		localOnlyCollectionOptions<SelectV2Project>({
-			id: `v2_projects-${organizationId}`,
-			getKey: (item) => item.id,
-		}),
-	);
-
-	const v2Hosts = createCollection(
-		localOnlyCollectionOptions<SelectV2Host>({
-			id: `v2_hosts-${organizationId}`,
-			getKey: (item) => item.id,
-		}),
-	);
-
-	const v2Clients = createCollection(
-		localOnlyCollectionOptions<SelectV2Client>({
-			id: `v2_clients-${organizationId}`,
-			getKey: (item) => item.id,
-		}),
-	);
-
-	const v2UsersHosts = createCollection(
-		localOnlyCollectionOptions<SelectV2UsersHosts>({
-			id: `v2_users_hosts-${organizationId}`,
-			getKey: (item) => item.id,
-		}),
-	);
-
-	const v2Workspaces = createCollection(
-		localOnlyCollectionOptions<SelectV2Workspace>({
-			id: `v2_workspaces-${organizationId}`,
-			getKey: (item) => item.id,
-		}),
-	);
-
-	const workspaces = createCollection(
-		localOnlyCollectionOptions<SelectWorkspace>({
-			id: `workspaces-${organizationId}`,
-			getKey: (item) => item.id,
-		}),
-	);
-
-	const users = createCollection(
-		localOnlyCollectionOptions<SelectUser>({
-			id: `users-${organizationId}`,
-			getKey: (item) => item.id,
-		}),
-	);
-
-	const agentCommands = createCollection(
-		localOnlyCollectionOptions<SelectAgentCommand>({
-			id: `agent_commands-${organizationId}`,
-			getKey: (item) => item.id,
-		}),
-	);
-
 	const chatSessions = createCollection(
-		localOnlyCollectionOptions<SelectChatSession>({
+		localOnlyCollectionOptions<ChatSession>({
 			id: `chat_sessions-${organizationId}`,
-			getKey: (item) => item.id,
-		}),
-	);
-
-	const githubRepositories = createCollection(
-		localOnlyCollectionOptions<SelectGithubRepository>({
-			id: `github_repositories-${organizationId}`,
-			getKey: (item) => item.id,
-		}),
-	);
-
-	const githubPullRequests = createCollection(
-		localOnlyCollectionOptions<SelectGithubPullRequest>({
-			id: `github_pull_requests-${organizationId}`,
 			getKey: (item) => item.id,
 		}),
 	);
@@ -201,20 +89,7 @@ function createOrgCollections(organizationId: string): OrgCollections {
 	);
 
 	return {
-		tasks,
-		taskStatuses,
-		projects,
-		v2Hosts,
-		v2Clients,
-		v2UsersHosts,
-		v2Projects,
-		v2Workspaces,
-		workspaces,
-		users,
-		agentCommands,
 		chatSessions,
-		githubRepositories,
-		githubPullRequests,
 		v2SidebarProjects,
 		v2WorkspaceLocalState,
 		v2SidebarSections,

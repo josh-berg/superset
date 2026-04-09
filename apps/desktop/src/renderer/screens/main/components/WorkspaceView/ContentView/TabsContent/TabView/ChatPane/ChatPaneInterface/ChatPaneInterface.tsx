@@ -21,7 +21,6 @@ import type {
 	ModelOption,
 	PermissionMode,
 } from "renderer/components/Chat/ChatInterface/types";
-import { apiTrpcClient } from "renderer/lib/api-trpc-client";
 import {
 	getDesktopChatModelOptions,
 	isDesktopChatDevMode,
@@ -132,14 +131,7 @@ function useAvailableModels(): {
 	models: ModelOption[];
 	defaultModel: ModelOption | null;
 } {
-	const localModels = getDesktopChatModelOptions();
-	const { data } = useQuery({
-		queryKey: ["chat", "models"],
-		queryFn: () => apiTrpcClient.chat.getModels.query(),
-		enabled: !isDesktopChatDevMode(),
-		staleTime: Number.POSITIVE_INFINITY,
-	});
-	const models = localModels.length > 0 ? localModels : (data?.models ?? []);
+	const models = getDesktopChatModelOptions();
 	return { models, defaultModel: models[0] ?? null };
 }
 

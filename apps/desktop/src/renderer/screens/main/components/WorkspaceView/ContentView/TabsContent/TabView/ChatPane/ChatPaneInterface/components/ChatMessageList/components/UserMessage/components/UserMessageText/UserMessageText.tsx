@@ -1,6 +1,5 @@
 import { normalizeWorkspaceFilePath } from "renderer/components/Chat/ChatInterface/utils/file-paths";
 import { FileMentionChip } from "renderer/components/Chat/components/FileMentionChip";
-import { LinkedTaskChip } from "renderer/components/Chat/components/LinkedTaskChip";
 import { parseUserMentions } from "renderer/components/Chat/utils/parseUserMentions";
 import type { ChatMessage, ChatMessagePart } from "../../types";
 
@@ -21,13 +20,7 @@ export function UserMessageText({
 		}
 
 		const mentionSegments = parseUserMentions(part.text);
-		const taskMentions = mentionSegments.filter(
-			(s) => s.type === "task-mention",
-		);
-		const otherSegments = mentionSegments.filter(
-			(s) => s.type !== "task-mention",
-		);
-		const hasNonTaskContent = otherSegments.some(
+		const hasContent = mentionSegments.some(
 			(s) => (s.type === "text" && s.value.trim()) || s.type === "file-mention",
 		);
 
@@ -36,19 +29,9 @@ export function UserMessageText({
 				key={`${message.id}-${partIndex}`}
 				className="flex max-w-[85%] flex-col items-end gap-2"
 			>
-				{taskMentions.length > 0 && (
-					<div className="flex flex-wrap justify-end gap-2">
-						{taskMentions.map((segment, segmentIndex) => (
-							<LinkedTaskChip
-								key={`${message.id}-${partIndex}-task-${segmentIndex}`}
-								slug={segment.slug}
-							/>
-						))}
-					</div>
-				)}
-				{hasNonTaskContent && (
+				{hasContent && (
 					<div className="rounded-lg bg-muted px-4 py-2.5 text-sm text-foreground whitespace-pre-wrap">
-						{otherSegments.map((segment, segmentIndex) => {
+						{mentionSegments.map((segment, segmentIndex) => {
 							if (segment.type === "text") {
 								return (
 									<span

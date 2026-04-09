@@ -1,22 +1,18 @@
-import { FEATURE_FLAGS } from "@superset/shared/constants";
 import {
 	createFileRoute,
 	Outlet,
 	useLocation,
 	useNavigate,
 } from "@tanstack/react-router";
-import { useFeatureFlagEnabled } from "posthog-js/react";
 import { useEffect, useRef } from "react";
 import { DndProvider } from "react-dnd";
 import { NewWorkspaceModal } from "renderer/components/NewWorkspaceModal";
 import { useUpdateListener } from "renderer/components/UpdateToast";
-import { useOnlineStatus } from "renderer/hooks/useOnlineStatus";
 import { migrateHotkeyOverrides } from "renderer/hotkeys/migrate";
 import { dragDropManager } from "renderer/lib/dnd";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { showWorkspaceAutoNameWarningToast } from "renderer/lib/workspaces/showWorkspaceAutoNameWarningToast";
 import { InitGitDialog } from "renderer/react-query/projects/InitGitDialog";
-import { DashboardNewWorkspaceModal } from "renderer/routes/_authenticated/components/DashboardNewWorkspaceModal";
 import { WorkspaceInitEffects } from "renderer/screens/main/components/WorkspaceInitEffects";
 import { useSettingsStore } from "renderer/stores/settings-state";
 import { useTabsStore } from "renderer/stores/tabs/store";
@@ -24,7 +20,6 @@ import { useAgentHookListener } from "renderer/stores/tabs/useAgentHookListener"
 import { setPaneWorkspaceRunState } from "renderer/stores/tabs/workspace-run";
 import { useWorkspaceInitStore } from "renderer/stores/workspace-init";
 import { NOTIFICATION_EVENTS } from "shared/constants";
-import { AgentHooks } from "./components/AgentHooks";
 import { GlobalTerminalLifecycle } from "./components/GlobalTerminalLifecycle";
 import { TeardownLogsDialog } from "./components/TeardownLogsDialog";
 import { CollectionsProvider } from "./providers/CollectionsProvider";
@@ -35,14 +30,11 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AppLayout() {
-	const isOnline = useOnlineStatus();
 	const navigate = useNavigate();
 	const location = useLocation();
 	const setOriginRoute = useSettingsStore((s) => s.setOriginRoute);
 	const utils = electronTrpc.useUtils();
 	const shownWorkspaceInitWarningsRef = useRef(new Set<string>());
-	const isV2CloudEnabled =
-		useFeatureFlagEnabled(FEATURE_FLAGS.V2_CLOUD) ?? false;
 
 	useAgentHookListener();
 	useUpdateListener();
@@ -124,14 +116,9 @@ function AppLayout() {
 			<CollectionsProvider>
 				<GlobalTerminalLifecycle />
 				<HostServiceProvider>
-					<AgentHooks />
 					<Outlet />
 					<WorkspaceInitEffects />
-					{isV2CloudEnabled ? (
-						<DashboardNewWorkspaceModal />
-					) : (
-						<NewWorkspaceModal />
-					)}
+					<NewWorkspaceModal />
 					<InitGitDialog />
 					<TeardownLogsDialog />
 				</HostServiceProvider>

@@ -11,7 +11,6 @@ import { FileIcon, FileTextIcon, ImageIcon } from "lucide-react";
 import { useCallback } from "react";
 import { HiMiniChatBubbleLeftRight } from "react-icons/hi2";
 import { FileMentionChip } from "renderer/components/Chat/components/FileMentionChip";
-import { LinkedTaskChip } from "renderer/components/Chat/components/LinkedTaskChip";
 import { parseUserMentions } from "renderer/components/Chat/utils/parseUserMentions";
 import { useTabsStore } from "renderer/stores/tabs/store";
 import type { InterruptedMessagePreview } from "../../types";
@@ -108,12 +107,7 @@ export function MessageList({
 							const mentionSegments = textContent
 								? parseUserMentions(textContent)
 								: [];
-							const taskMentions = mentionSegments.filter(
-								(s) => s.type === "task-mention",
-							);
-							const otherSegments = mentionSegments.filter(
-								(s) => s.type !== "task-mention",
-							);
+							const otherSegments = mentionSegments;
 							const hasNonTaskContent = otherSegments.some(
 								(s) =>
 									(s.type === "text" && s.value.trim()) ||
@@ -152,16 +146,6 @@ export function MessageList({
 													key={`${msg.id}-file-${p.url}`}
 													filename={p.filename || ""}
 													mediaType={p.mediaType}
-												/>
-											))}
-										</div>
-									)}
-									{taskMentions.length > 0 && (
-										<div className="flex max-w-[85%] flex-wrap justify-end gap-2">
-											{taskMentions.map((segment, segIdx) => (
-												<LinkedTaskChip
-													key={`${msg.id}-task-${segIdx}`}
-													slug={segment.slug}
 												/>
 											))}
 										</div>
