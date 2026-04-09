@@ -25,7 +25,6 @@ export const SETTING_ITEM_ID = {
 	AGENTS_TASK_PROMPTS: "agents-task-prompts",
 
 	TERMINAL_PRESETS: "terminal-presets",
-	TERMINAL_QUICK_ADD: "terminal-quick-add",
 	TERMINAL_SESSIONS: "terminal-sessions",
 	TERMINAL_LINK_BEHAVIOR: "terminal-link-behavior",
 
@@ -401,26 +400,6 @@ export const SETTINGS_ITEMS: SettingsItem[] = [
 			"config",
 			"shell",
 			"run",
-		],
-	},
-	{
-		id: SETTING_ITEM_ID.TERMINAL_QUICK_ADD,
-		section: "terminal",
-		title: "Quick Add Templates",
-		description: "Pre-configured terminal presets",
-		keywords: [
-			"terminal",
-			"quick",
-			"add",
-			"template",
-			"claude",
-			"codex",
-			"gemini",
-			"cursor",
-			"opencode",
-			"pi",
-			"ai",
-			"assistant",
 		],
 	},
 	{

@@ -48,10 +48,6 @@ export function TerminalSettings({
 		SETTING_ITEM_ID.TERMINAL_PRESETS,
 		visibleItems,
 	);
-	const showQuickAdd = isItemVisible(
-		SETTING_ITEM_ID.TERMINAL_QUICK_ADD,
-		visibleItems,
-	);
 	const showLinkBehavior = isItemVisible(
 		SETTING_ITEM_ID.TERMINAL_LINK_BEHAVIOR,
 		visibleItems,
@@ -71,11 +67,10 @@ export function TerminalSettings({
 			</div>
 
 			<SectionList>
-				{(showPresets || showQuickAdd) && (
+				{showPresets && (
 					<PresetsSection
 						key="presets"
 						showPresets={showPresets}
-						showQuickAdd={showQuickAdd}
 						editingPresetId={editingPresetId}
 						onEditingPresetIdChange={onEditingPresetIdChange}
 						pendingCreateProjectId={pendingCreateProjectId}

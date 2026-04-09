@@ -72,7 +72,6 @@ export const BUILTIN_TERMINAL_AGENTS = [
 			"Amp's coding agent for terminal-first coding, subagents, and task work.",
 		command: "amp",
 		promptTransport: "stdin",
-		includeInDefaultTerminalPresets: true,
 	}),
 	createBuiltinTerminalAgent({
 		id: "codex",
@@ -83,7 +82,6 @@ export const BUILTIN_TERMINAL_AGENTS = [
 			'codex -c model_reasoning_effort="high" --dangerously-bypass-approvals-and-sandbox -c model_reasoning_summary="detailed" -c model_supports_reasoning_summaries=true',
 		promptCommand:
 			'codex -c model_reasoning_effort="high" --dangerously-bypass-approvals-and-sandbox -c model_reasoning_summary="detailed" -c model_supports_reasoning_summaries=true --',
-		includeInDefaultTerminalPresets: true,
 	}),
 	createBuiltinTerminalAgent({
 		id: "gemini",
@@ -93,7 +91,6 @@ export const BUILTIN_TERMINAL_AGENTS = [
 		command: "gemini --yolo",
 		promptCommand: "gemini",
 		promptCommandSuffix: "--yolo",
-		includeInDefaultTerminalPresets: true,
 	}),
 	createBuiltinTerminalAgent({
 		id: "mastracode",
@@ -101,7 +98,6 @@ export const BUILTIN_TERMINAL_AGENTS = [
 		description:
 			"Mastra's coding agent for building, debugging, and shipping code from the terminal.",
 		command: "mastracode",
-		includeInDefaultTerminalPresets: true,
 	}),
 	createBuiltinTerminalAgent({
 		id: "opencode",
@@ -109,7 +105,6 @@ export const BUILTIN_TERMINAL_AGENTS = [
 		description: "Open-source coding agent for the terminal, IDE, and desktop.",
 		command: "opencode",
 		promptCommand: "opencode --prompt",
-		includeInDefaultTerminalPresets: true,
 	}),
 	createBuiltinTerminalAgent({
 		id: "pi",
@@ -117,7 +112,6 @@ export const BUILTIN_TERMINAL_AGENTS = [
 		description:
 			"Minimal terminal coding harness for flexible coding workflows.",
 		command: "pi",
-		includeInDefaultTerminalPresets: true,
 	}),
 	createBuiltinTerminalAgent({
 		id: "copilot",
@@ -127,7 +121,6 @@ export const BUILTIN_TERMINAL_AGENTS = [
 		command: "copilot --allow-all",
 		promptCommand: "copilot -i --allow-all",
 		promptCommandSuffix: "--yolo",
-		includeInDefaultTerminalPresets: true,
 	}),
 	createBuiltinTerminalAgent({
 		id: "cursor-agent",
