@@ -1,5 +1,4 @@
 import type { TerminalPreset } from "@superset/local-db";
-import { Button } from "@superset/ui/button";
 import { eq, or } from "@tanstack/db";
 import { useLiveQuery } from "@tanstack/react-db";
 import { useNavigate, useParams } from "@tanstack/react-router";
@@ -11,8 +10,7 @@ import {
 	useRef,
 	useState,
 } from "react";
-import { BsTerminalPlus } from "react-icons/bs";
-import { TbMessageCirclePlus } from "react-icons/tb";
+import { LuPlus } from "react-icons/lu";
 import {
 	getPresetIcon,
 	useIsDarkTheme,
@@ -23,7 +21,6 @@ import { useCollections } from "renderer/routes/_authenticated/providers/Collect
 import { WorkspaceRunButton } from "renderer/routes/_authenticated/_dashboard/components/TopBar/components/WorkspaceRunButton";
 import { PRESET_HOTKEY_IDS } from "renderer/routes/_authenticated/_dashboard/workspace/$workspaceId/hooks/usePresetHotkeys";
 import { requestTabClose } from "renderer/stores/editor-state/editorCoordinator";
-import { useSidebarStore } from "renderer/stores/sidebar-state";
 import { useTabsStore } from "renderer/stores/tabs/store";
 import { useTabsWithPresets } from "renderer/stores/tabs/useTabsWithPresets";
 import {
@@ -31,7 +28,6 @@ import {
 	resolveActiveTabIdForWorkspace,
 } from "renderer/stores/tabs/utils";
 import { type ActivePaneStatus, pickHigherStatus } from "shared/tabs-types";
-import { SidebarControl } from "renderer/screens/main/components/SidebarControl";
 import { PresetBarItem } from "../../components/PresetsBar/components/PresetBarItem";
 import { GroupItem } from "./GroupItem";
 import { NewTabDropZone } from "./NewTabDropZone";
@@ -102,8 +98,7 @@ export function GroupStrip() {
 	const panes = useTabsStore((s) => s.panes);
 	const activeTabIds = useTabsStore((s) => s.activeTabIds);
 	const tabHistoryStacks = useTabsStore((s) => s.tabHistoryStacks);
-	const addChatTab = useTabsStore((s) => s.addChatTab);
-	const renameTab = useTabsStore((s) => s.renameTab);
+const renameTab = useTabsStore((s) => s.renameTab);
 	const setActiveTab = useTabsStore((s) => s.setActiveTab);
 	const movePaneToTab = useTabsStore((s) => s.movePaneToTab);
 	const movePaneToNewTab = useTabsStore((s) => s.movePaneToNewTab);
@@ -112,7 +107,6 @@ export function GroupStrip() {
 	const setTabAutoTitle = useTabsStore((s) => s.setTabAutoTitle);
 	const setPaneAutoTitle = useTabsStore((s) => s.setPaneAutoTitle);
 
-	const isSidebarOpen = useSidebarStore((s) => s.isSidebarOpen);
 	const navigate = useNavigate();
 	const isDark = useIsDarkTheme();
 
@@ -298,12 +292,7 @@ export function GroupStrip() {
 		addTab(activeWorkspaceId);
 	};
 
-	const handleAddChat = () => {
-		if (!activeWorkspaceId) return;
-		addChatTab(activeWorkspaceId);
-	};
-
-	const handleOpenPreset = useCallback(
+const handleOpenPreset = useCallback(
 		(preset: TerminalPreset) => {
 			if (!activeWorkspaceId) return;
 			openPreset(activeWorkspaceId, preset, { target: "active-tab" });
@@ -459,65 +448,50 @@ export function GroupStrip() {
 
 	return (
 		<div className="flex flex-col shrink-0 bg-background">
-			{/* Action bar: Terminal | Chat | presets… ··· SidebarControl | RunButton */}
+			{/* Action bar: Terminal | Chat | presets… ··· RunButton */}
 			<div className="flex h-10 items-center border-b border-border shrink-0">
-				<NewTabDropZone
-					onDrop={movePaneToNewTab}
-					isLastPaneInTab={checkIsLastPaneInTab}
-				>
-					<div
-						className="flex items-center gap-0.5 flex-1 px-1 overflow-x-auto"
-						style={{ scrollbarWidth: "none" }}
+				<div className="flex-1 min-w-0">
+					<NewTabDropZone
+						onDrop={movePaneToNewTab}
+						isLastPaneInTab={checkIsLastPaneInTab}
 					>
-						<Button
-							variant="ghost"
-							className="h-7 rounded-r-none pl-2 pr-1.5 gap-1 text-xs border border-border/60 bg-muted/30 text-muted-foreground hover:bg-accent/60 hover:text-foreground shrink-0"
-							onClick={handleAddGroup}
+						<div
+							className="flex items-center gap-0.5 flex-1 px-1 overflow-x-auto"
+							style={{ scrollbarWidth: "none" }}
 						>
-							<BsTerminalPlus className="size-3.5" />
-							Terminal
-						</Button>
-						<Button
-							variant="ghost"
-							className="h-7 rounded-l-none border border-l-0 border-border/60 bg-muted/30 px-1.5 gap-1 text-xs text-muted-foreground hover:bg-accent/60 hover:text-foreground shrink-0"
-							onClick={handleAddChat}
-						>
-							<TbMessageCirclePlus className="size-3.5" />
-							Chat
-						</Button>
-						{pinnedPresets.map(({ preset, index }, pinnedIndex) => {
-							const hotkeyId = PRESET_HOTKEY_IDS[index];
-							return (
-								<PresetBarItem
-									key={preset.id}
-									preset={preset}
-									pinnedIndex={pinnedIndex}
-									hotkeyId={hotkeyId}
-									isDark={isDark}
-									canOpen={!!activeWorkspaceId}
-									canOpenInCurrentTerminal={canOpenInCurrentTerminal}
-									onOpenDefault={handleOpenPreset}
-									onOpenInCurrentTerminal={handleOpenPresetInCurrentTerminal}
-									onOpenInNewTab={handleOpenPresetInNewTab}
-									onOpenInPane={handleOpenPresetInPane}
-									onEdit={handleEditPreset}
-									onLocalReorder={handleLocalPinnedReorder}
-									onPersistReorder={handlePersistPinnedReorder}
-								/>
-							);
-						})}
-					</div>
-				</NewTabDropZone>
-				<div className="flex items-center gap-2 px-2 shrink-0 border-l border-border h-full">
-					{!isSidebarOpen && <SidebarControl />}
-					{activeWorkspaceId && (
+							{pinnedPresets.map(({ preset, index }, pinnedIndex) => {
+								const hotkeyId = PRESET_HOTKEY_IDS[index];
+								return (
+									<PresetBarItem
+										key={preset.id}
+										preset={preset}
+										pinnedIndex={pinnedIndex}
+										hotkeyId={hotkeyId}
+										isDark={isDark}
+										canOpen={!!activeWorkspaceId}
+										canOpenInCurrentTerminal={canOpenInCurrentTerminal}
+										onOpenDefault={handleOpenPreset}
+										onOpenInCurrentTerminal={handleOpenPresetInCurrentTerminal}
+										onOpenInNewTab={handleOpenPresetInNewTab}
+										onOpenInPane={handleOpenPresetInPane}
+										onEdit={handleEditPreset}
+										onLocalReorder={handleLocalPinnedReorder}
+										onPersistReorder={handlePersistPinnedReorder}
+									/>
+								);
+							})}
+						</div>
+					</NewTabDropZone>
+				</div>
+				{activeWorkspaceId && (
+					<div className="flex items-center px-2 shrink-0 border-l border-border h-full">
 						<WorkspaceRunButton
 							projectId={workspace?.projectId ?? workspace?.project?.id}
 							workspaceId={activeWorkspaceId}
 							worktreePath={workspace?.worktreePath}
 						/>
-					)}
-				</div>
+					</div>
+				)}
 			</div>
 
 			{/* Tabs bar */}
@@ -548,6 +522,14 @@ export function GroupStrip() {
 								/>
 							</div>
 						))}
+						<button
+							type="button"
+							onClick={handleAddGroup}
+							className="flex items-center justify-center px-2 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+							aria-label="New terminal tab"
+						>
+							<LuPlus className="size-3.5" />
+						</button>
 					</div>
 				</div>
 			</div>

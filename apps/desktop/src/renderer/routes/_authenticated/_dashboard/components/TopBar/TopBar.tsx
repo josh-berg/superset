@@ -1,6 +1,7 @@
 import { useParams } from "@tanstack/react-router";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { getWorkspaceDisplayName } from "renderer/lib/getWorkspaceDisplayName";
+import { SidebarControl } from "renderer/screens/main/components/SidebarControl";
 import { NavigationControls } from "./components/NavigationControls";
 import { OpenInMenuButton } from "./components/OpenInMenuButton";
 import { ResourceConsumption } from "./components/ResourceConsumption";
@@ -57,6 +58,7 @@ export function TopBar() {
 						projectId={workspace.project?.id}
 					/>
 				) : null}
+				{workspaceId && <SidebarControl />}
 				{!isMac && <WindowControls />}
 			</div>
 		</div>
