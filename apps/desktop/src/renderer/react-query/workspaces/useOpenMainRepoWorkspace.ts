@@ -1,5 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { electronTrpc } from "renderer/lib/electron-trpc";
+import { invalidateWorkspaceQueries } from "renderer/react-query/workspaces/invalidateWorkspaceQueries";
 import { navigateToWorkspace } from "renderer/routes/_authenticated/_dashboard/utils/workspace-navigation";
 import { useWorkspaceInitStore } from "renderer/stores/workspace-init";
 import type { WorkspaceInitProgress } from "shared/types/workspace-init";
@@ -19,7 +20,7 @@ export function useOpenMainRepoWorkspace(
 	return electronTrpc.workspaces.openMainRepoWorkspace.useMutation({
 		...options,
 		onSuccess: async (data, ...rest) => {
-			await utils.workspaces.invalidate();
+			await invalidateWorkspaceQueries(utils);
 
 			if (!data.wasExisting) {
 				let setupData = null;

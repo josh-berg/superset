@@ -1,4 +1,5 @@
 import { electronTrpc } from "renderer/lib/electron-trpc";
+import { invalidateWorkspaceQueries } from "renderer/react-query/workspaces/invalidateWorkspaceQueries";
 
 /**
  * Mutation hook for opening a project from a given path
@@ -14,10 +15,11 @@ export function useOpenFromPath(
 	return electronTrpc.projects.openFromPath.useMutation({
 		...options,
 		onSuccess: async (...args) => {
-			// Auto-invalidate projects query
-			await utils.projects.getRecents.invalidate();
+			await Promise.all([
+				utils.projects.getRecents.invalidate(),
+				invalidateWorkspaceQueries(utils),
+			]);
 
-			// Call user's onSuccess if provided
 			await options?.onSuccess?.(...args);
 		},
 	});

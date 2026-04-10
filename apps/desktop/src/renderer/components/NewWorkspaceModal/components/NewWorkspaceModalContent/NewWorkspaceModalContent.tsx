@@ -314,7 +314,7 @@ export function NewWorkspaceModalContent({
 								onSelect={() => {
 									void openNew().then((projects) => {
 										if (projects.length > 0) {
-											updateDraft({ selectedProjectId: projects[0].id });
+											handleProjectSelect(projects[0].id);
 										}
 									});
 								}}

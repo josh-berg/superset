@@ -2,6 +2,7 @@ import type { AgentLaunchRequest } from "@superset/shared/agent-launch";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useRef } from "react";
 import { electronTrpc } from "renderer/lib/electron-trpc";
+import { invalidateWorkspaceQueries } from "renderer/react-query/workspaces/invalidateWorkspaceQueries";
 import { navigateToWorkspace } from "renderer/routes/_authenticated/_dashboard/utils/workspace-navigation";
 import { useWorkspaceInitStore } from "renderer/stores/workspace-init";
 import type { WorkspaceInitProgress } from "shared/types/workspace-init";
@@ -48,7 +49,7 @@ export function useCreateFromPr(options?: MutationOptions) {
 				});
 			}
 
-			await utils.workspaces.invalidate();
+			await invalidateWorkspaceQueries(utils);
 
 			navigateToWorkspace(data.workspace.id, navigate);
 

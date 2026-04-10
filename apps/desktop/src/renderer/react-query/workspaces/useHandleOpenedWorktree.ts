@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useCallback } from "react";
 import { useCreateOrAttachWithTheme } from "renderer/hooks/useCreateOrAttachWithTheme";
 import { electronTrpc } from "renderer/lib/electron-trpc";
+import { invalidateWorkspaceQueries } from "renderer/react-query/workspaces/invalidateWorkspaceQueries";
 import { navigateToWorkspace } from "renderer/routes/_authenticated/_dashboard/utils/workspace-navigation";
 import { useTabsStore } from "renderer/stores/tabs/store";
 import { bootstrapOpenWorktree } from "./bootstrap-open-worktree";
@@ -22,7 +23,7 @@ export function useHandleOpenedWorktree() {
 
 	return useCallback(
 		async (data: OpenedWorktreeData) => {
-			await utils.workspaces.invalidate();
+			await invalidateWorkspaceQueries(utils);
 			await utils.projects.getRecents.invalidate();
 
 			const bootstrapError = await bootstrapOpenWorktree({

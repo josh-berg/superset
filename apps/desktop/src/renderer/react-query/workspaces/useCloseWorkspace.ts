@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { electronTrpc } from "renderer/lib/electron-trpc";
+import { invalidateWorkspaceQueries } from "renderer/react-query/workspaces/invalidateWorkspaceQueries";
 import { navigateToWorkspace } from "renderer/routes/_authenticated/_dashboard/utils/workspace-navigation";
 
 type CloseContext = {
@@ -102,7 +103,7 @@ export function useCloseWorkspace(
 		},
 		onSuccess: async (data, variables, ...rest) => {
 			// Invalidate to ensure consistency with backend state
-			await utils.workspaces.invalidate();
+			await invalidateWorkspaceQueries(utils);
 			// Invalidate project queries since close updates project metadata
 			await utils.projects.getRecents.invalidate();
 

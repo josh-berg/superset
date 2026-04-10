@@ -1,4 +1,5 @@
 import { electronTrpc } from "renderer/lib/electron-trpc";
+import { invalidateWorkspaceQueries } from "renderer/react-query/workspaces/invalidateWorkspaceQueries";
 
 /**
  * Mutation hook for updating a workspace
@@ -12,8 +13,7 @@ export function useUpdateWorkspace(
 	return electronTrpc.workspaces.update.useMutation({
 		...options,
 		onSuccess: async (...args) => {
-			// Auto-invalidate all workspace queries
-			await utils.workspaces.invalidate();
+			await invalidateWorkspaceQueries(utils);
 
 			// Call user's onSuccess if provided
 			await options?.onSuccess?.(...args);

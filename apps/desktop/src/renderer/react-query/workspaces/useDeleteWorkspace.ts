@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { electronTrpc } from "renderer/lib/electron-trpc";
+import { invalidateWorkspaceQueries } from "renderer/react-query/workspaces/invalidateWorkspaceQueries";
 import { navigateToWorkspace } from "renderer/routes/_authenticated/_dashboard/utils/workspace-navigation";
 
 type DeleteContext = {
@@ -105,7 +106,7 @@ export function useDeleteWorkspace(
 			} as DeleteContext;
 		},
 		onSettled: async (...args) => {
-			await utils.workspaces.invalidate();
+			await invalidateWorkspaceQueries(utils);
 			await options?.onSettled?.(...args);
 		},
 		onSuccess: async (data, variables, context, ...rest) => {

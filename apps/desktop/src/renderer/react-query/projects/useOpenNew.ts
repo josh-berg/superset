@@ -1,4 +1,5 @@
 import { electronTrpc } from "renderer/lib/electron-trpc";
+import { invalidateWorkspaceQueries } from "renderer/react-query/workspaces/invalidateWorkspaceQueries";
 
 /**
  * Mutation hook for opening a new project
@@ -12,10 +13,11 @@ export function useOpenNew(
 	return electronTrpc.projects.openNew.useMutation({
 		...options,
 		onSuccess: async (...args) => {
-			// Auto-invalidate projects query
-			await utils.projects.getRecents.invalidate();
+			await Promise.all([
+				utils.projects.getRecents.invalidate(),
+				invalidateWorkspaceQueries(utils),
+			]);
 
-			// Call user's onSuccess if provided
 			await options?.onSuccess?.(...args);
 		},
 	});
