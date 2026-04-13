@@ -21,8 +21,9 @@ import { useWorkspaceInitStore } from "renderer/stores/workspace-init";
 import { NOTIFICATION_EVENTS } from "shared/constants";
 import { GlobalTerminalLifecycle } from "./components/GlobalTerminalLifecycle";
 import { TeardownLogsDialog } from "./components/TeardownLogsDialog";
+import { createPierreWorker } from "./lib/pierreWorker";
 import { CollectionsProvider } from "./providers/CollectionsProvider";
-import { HostServiceProvider } from "./providers/HostServiceProvider";
+import { LocalHostServiceProvider } from "./providers/LocalHostServiceProvider";
 
 export const Route = createFileRoute("/_authenticated")({
 	component: AppLayout,

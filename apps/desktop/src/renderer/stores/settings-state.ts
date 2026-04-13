@@ -11,6 +11,7 @@ export type SettingsSection =
 	| "terminal"
 	| "models"
 	| "permissions"
+	| "security"
 	| "project";
 
 interface SettingsState {

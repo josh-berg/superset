@@ -23,7 +23,7 @@ import { requestAppleEventsAccess } from "./lib/apple-events-permission";
 import { resolveDevWorkspaceName } from "./lib/dev-workspace-name";
 import { setWorkspaceDockIcon } from "./lib/dock-icon";
 import { loadWebviewBrowserExtension } from "./lib/extensions";
-import { getHostServiceManager } from "./lib/host-service-manager";
+import { getHostServiceCoordinator } from "./lib/host-service-coordinator";
 import { localDb } from "./lib/local-db";
 import { ensureProjectIconsDir, getProjectIconPath } from "./lib/project-icons";
 import { initSentry } from "./lib/sentry";
@@ -134,15 +134,15 @@ app.on("open-url", async (event, url) => {
 	}
 });
 
-export type QuitMode = "release" | "stop";
-let pendingQuitMode: QuitMode | null = null;
 let isQuitting = false;
+let skipQuitConfirmation = false;
 
-/** Request the app to quit.
- *  - "release": keep services running (re-adoptable on next launch)
- *  - "stop": terminate all services before exit */
-export function requestQuit(mode: QuitMode): void {
-	pendingQuitMode = mode;
+export function setSkipQuitConfirmation(): void {
+	skipQuitConfirmation = true;
+}
+
+export function quitApp(): void {
+	setSkipQuitConfirmation();
 	app.quit();
 }
 
@@ -169,12 +169,8 @@ function getConfirmOnQuitSetting(): boolean {
 app.on("before-quit", async (event) => {
 	if (isQuitting) return;
 
-	// Consume the quit mode so it doesn't persist across aborted quits
-	const quitMode = pendingQuitMode;
-	pendingQuitMode = null;
-
 	const isDev = process.env.NODE_ENV === "development";
-	if (quitMode === null && !isDev && getConfirmOnQuitSetting()) {
+	if (!skipQuitConfirmation && !isDev && getConfirmOnQuitSetting()) {
 		event.preventDefault();
 
 		try {
@@ -196,13 +192,12 @@ app.on("before-quit", async (event) => {
 	}
 
 	isQuitting = true;
-	const manager = getHostServiceManager();
-	if (quitMode === "stop") {
-		manager.stopAll();
-	} else {
-		manager.releaseAll();
+	try {
+		getHostServiceCoordinator().releaseAll();
+		disposeTray();
+	} catch (error) {
+		console.error("[main] Cleanup during quit failed:", error);
 	}
-	disposeTray();
 	app.exit(0);
 });
 
@@ -351,7 +346,7 @@ if (!gotTheLock) {
 
 		// Discover and adopt host-services that survived a previous quit
 		// before the tray initializes, so it shows accurate status immediately.
-		await getHostServiceManager().discoverAndAdoptAll();
+		await getHostServiceCoordinator().discoverAll();
 
 		await makeAppSetup(() => MainWindow());
 		initTray();

@@ -20,6 +20,10 @@
 			"types": "./src/runtime/git/index.ts",
 			"default": "./src/runtime/git/index.ts"
 		},
+		"./tunnel": {
+			"types": "./src/tunnel/index.ts",
+			"default": "./src/tunnel/index.ts"
+		},
 		"./trpc": {
 			"types": "./src/trpc/index.ts",
 			"default": "./src/trpc/index.ts"
@@ -32,6 +36,7 @@
 	"scripts": {
 		"clean": "git clean -xdf .cache .turbo dist node_modules",
 		"dev": "bun run src/serve.ts",
+		"build:host": "bun run build.ts",
 		"generate": "drizzle-kit generate",
 		"typecheck": "tsc --noEmit --emitDeclarationOnly false"
 	},
@@ -41,6 +46,7 @@
 		"@hono/trpc-server": "^0.3.4",
 		"@octokit/rest": "^22.0.1",
 		"@superset/workspace-fs": "workspace:*",
+		"@t3-oss/env-core": "^0.13.8",
 		"@trpc/client": "^11.7.1",
 		"@trpc/server": "^11.7.1",
 		"better-sqlite3": "12.6.2",

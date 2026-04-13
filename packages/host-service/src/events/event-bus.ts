@@ -66,13 +66,17 @@ export class EventBus {
 
 	constructor(options: EventBusOptions) {
 		this.filesystem = options.filesystem;
-		this.gitWatcher = new GitWatcher(options.db);
+		this.gitWatcher = new GitWatcher(options.db, options.filesystem);
 	}
 
 	start(): void {
 		this.gitWatcher.start();
-		this.removeGitListener = this.gitWatcher.onChanged((workspaceId) => {
-			this.broadcast({ type: "git:changed", workspaceId });
+		this.removeGitListener = this.gitWatcher.onChanged((event) => {
+			this.broadcast({
+				type: "git:changed",
+				workspaceId: event.workspaceId,
+				...(event.paths !== undefined ? { paths: event.paths } : {}),
+			});
 		});
 	}
 

@@ -16,9 +16,6 @@ export interface HostServiceContext {
 	github: () => Promise<Octokit>;
 	db: HostDb;
 	runtime: HostServiceRuntime;
-	deviceClientId: string | null;
-	deviceName: string | null;
-	serviceVersion: string | null;
-	protocolVersion: number | null;
+	organizationId: string;
 	isAuthenticated: boolean;
 }

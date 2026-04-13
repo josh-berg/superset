@@ -103,6 +103,12 @@ const SECTION_GROUPS: SectionGroup[] = [
 		label: "System",
 		items: [
 			{
+				id: "/settings/security",
+				section: "security",
+				label: "Security",
+				icon: <HiOutlineLockClosed className="h-4 w-4" />,
+			},
+			{
 				id: "/settings/permissions",
 				section: "permissions",
 				label: "Permissions",

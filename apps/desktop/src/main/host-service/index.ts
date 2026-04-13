@@ -1,13 +1,8 @@
 /**
  * Workspace Service — Desktop Entry Point
  *
- * Run with: ELECTRON_RUN_AS_NODE=1 electron dist/main/host-service.js
- *
- * Starts the host-service HTTP server on a random local port.
- * The parent Electron process reads the port from the IPC channel.
- *
- * When KEEP_ALIVE_AFTER_PARENT=1, the service stays running even if the
- * parent Electron process exits (out-of-app durability mode).
+ * Starts the host-service HTTP server on a port assigned by the coordinator.
+ * The coordinator polls health.check to know when it's ready.
  */
 
 import { serve } from "@hono/node-server";
@@ -15,17 +10,16 @@ import {
 	createApp,
 	JwtApiAuthProvider,
 	LocalGitCredentialProvider,
+	LocalModelProvider,
 	PskHostAuthProvider,
 } from "@superset/host-service";
 import {
 	initTerminalBaseEnv,
 	resolveTerminalBaseEnv,
 } from "@superset/host-service/terminal-env";
-import {
-	HOST_SERVICE_PROTOCOL_VERSION,
-	removeManifest,
-	writeManifest,
-} from "main/lib/host-service-manifest";
+import { connectRelay } from "@superset/host-service/tunnel";
+import { removeManifest, writeManifest } from "main/lib/host-service-manifest";
+import { env } from "./env";
 
 async function main(): Promise<void> {
 	const terminalBaseEnv = await resolveTerminalBaseEnv();
@@ -64,37 +58,39 @@ async function main(): Promise<void> {
 
 	const startedAt = Date.now();
 	const server = serve(
-		{ fetch: app.fetch, port: 0, hostname: "127.0.0.1" },
+		{ fetch: app.fetch, port: env.HOST_SERVICE_PORT, hostname: "127.0.0.1" },
 		(info: { port: number }) => {
-			if (organizationId) {
+			if (env.ORGANIZATION_ID) {
 				try {
 					writeManifest({
 						pid: process.pid,
 						endpoint: `http://127.0.0.1:${info.port}`,
-						authToken: hostServiceSecret ?? "",
-						serviceVersion: serviceVersion ?? "",
-						protocolVersion: protocolVersion ?? 0,
+						authToken: env.HOST_SERVICE_SECRET,
 						startedAt,
-						organizationId,
+						organizationId: env.ORGANIZATION_ID,
 					});
 				} catch (error) {
 					console.error("[host-service] Failed to write manifest:", error);
 				}
 			}
-			process.send?.({
-				type: "ready",
-				port: info.port,
-				serviceVersion,
-				protocolVersion,
-				startedAt,
-			});
+
+			if (env.RELAY_URL && env.ORGANIZATION_ID) {
+				void connectRelay({
+					api,
+					relayUrl: env.RELAY_URL,
+					localPort: info.port,
+					organizationId: env.ORGANIZATION_ID,
+					authProvider,
+					hostServiceSecret: env.HOST_SERVICE_SECRET,
+				});
+			}
 		},
 	);
 	injectWebSocket(server);
 
 	const shutdown = () => {
-		if (organizationId) {
-			removeManifest(organizationId);
+		if (env.ORGANIZATION_ID) {
+			removeManifest(env.ORGANIZATION_ID);
 		}
 		server.close();
 		process.exit(0);
@@ -102,20 +98,6 @@ async function main(): Promise<void> {
 
 	process.on("SIGTERM", shutdown);
 	process.on("SIGINT", shutdown);
-
-	if (!keepAliveAfterParent) {
-		const parentPid = process.ppid;
-		const parentCheck = setInterval(() => {
-			try {
-				process.kill(parentPid, 0);
-			} catch {
-				clearInterval(parentCheck);
-				console.log("[host-service] Parent process exited, shutting down");
-				shutdown();
-			}
-		}, 2000);
-		parentCheck.unref();
-	}
 }
 
 void main().catch((error) => {

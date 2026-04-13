@@ -13,6 +13,10 @@ import {
 	type DashboardSidebarSectionRow,
 	dashboardSidebarProjectSchema,
 	dashboardSidebarSectionSchema,
+	type PendingWorkspaceRow,
+	pendingWorkspaceSchema,
+	type V2TerminalPresetRow,
+	v2TerminalPresetSchema,
 	type WorkspaceLocalStateRow,
 	workspaceLocalStateSchema,
 } from "./dashboardSidebarLocal";
@@ -47,6 +51,20 @@ export interface OrgCollections {
 		LocalStorageCollectionUtils,
 		typeof dashboardSidebarSectionSchema,
 		z.input<typeof dashboardSidebarSectionSchema>
+	>;
+	v2TerminalPresets: Collection<
+		V2TerminalPresetRow,
+		string,
+		LocalStorageCollectionUtils,
+		typeof v2TerminalPresetSchema,
+		z.input<typeof v2TerminalPresetSchema>
+	>;
+	pendingWorkspaces: Collection<
+		PendingWorkspaceRow,
+		string,
+		LocalStorageCollectionUtils,
+		typeof pendingWorkspaceSchema,
+		z.input<typeof pendingWorkspaceSchema>
 	>;
 }
 
@@ -88,11 +106,31 @@ function createOrgCollections(organizationId: string): OrgCollections {
 		}),
 	);
 
+	const v2TerminalPresets = createCollection(
+		localStorageCollectionOptions({
+			id: `v2_terminal_presets-${organizationId}`,
+			storageKey: `v2-terminal-presets-${organizationId}`,
+			schema: v2TerminalPresetSchema,
+			getKey: (item) => item.id,
+		}),
+	);
+
+	const pendingWorkspaces = createCollection(
+		localStorageCollectionOptions({
+			id: `pending_workspaces-${organizationId}`,
+			storageKey: `pending-workspaces-${organizationId}`,
+			schema: pendingWorkspaceSchema,
+			getKey: (item) => item.id,
+		}),
+	);
+
 	return {
 		chatSessions,
 		v2SidebarProjects,
 		v2WorkspaceLocalState,
 		v2SidebarSections,
+		v2TerminalPresets,
+		pendingWorkspaces,
 	};
 }
 

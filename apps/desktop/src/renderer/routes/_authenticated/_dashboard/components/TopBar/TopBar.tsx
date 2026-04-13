@@ -29,6 +29,7 @@ export function TopBar() {
 				<SidebarToggle />
 				<NavigationControls />
 				<ResourceConsumption />
+				{isRemoteV2Enabled && <VersionToggle />}
 			</div>
 
 <div className="flex items-center gap-3 h-full pr-4 shrink-0">

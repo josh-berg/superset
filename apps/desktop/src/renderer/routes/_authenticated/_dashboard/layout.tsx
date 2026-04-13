@@ -5,6 +5,7 @@ import {
 	useNavigate,
 } from "@tanstack/react-router";
 import { useState } from "react";
+import { useIsV2CloudEnabled } from "renderer/hooks/useIsV2CloudEnabled";
 import { useHotkey } from "renderer/hotkeys";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { ResizablePanel } from "renderer/screens/main/components/ResizablePanel";

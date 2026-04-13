@@ -10,7 +10,7 @@ import { createChatServiceRouter } from "./chat-service";
 import { createConfigRouter } from "./config";
 import { createExternalRouter } from "./external";
 import { createFilesystemRouter } from "./filesystem";
-import { createHostServiceManagerRouter } from "./host-service-manager";
+import { createHostServiceCoordinatorRouter } from "./host-service-coordinator";
 import { createMenuRouter } from "./menu";
 import { createModelProvidersRouter } from "./model-providers";
 import { createNotificationsRouter } from "./notifications";
@@ -50,7 +50,7 @@ export const createAppRouter = (getWindow: () => BrowserWindow | null) => {
 		config: createConfigRouter(),
 		uiState: createUiStateRouter(),
 		ringtone: createRingtoneRouter(getWindow),
-		hostServiceManager: createHostServiceManagerRouter(),
+		hostServiceCoordinator: createHostServiceCoordinatorRouter(),
 	});
 };
 

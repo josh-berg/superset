@@ -65,6 +65,7 @@ export interface PaneDefinition<TData> {
 	renderToolbar?(context: RendererContext<TData>): ReactNode;
 	onHeaderClick?(context: RendererContext<TData>): void;
 	onBeforeClose?(pane: Pane<TData>): boolean | Promise<boolean>;
+	onRemoved?(pane: Pane<TData>): void;
 	paneActions?:
 		| PaneActionConfig<TData>[]
 		| ((
@@ -86,8 +87,11 @@ export interface WorkspaceProps<TData> {
 	registry: PaneRegistry<TData>;
 	className?: string;
 	renderTabAccessory?: (tab: Tab<TData>) => ReactNode;
+	renderTabIcon?: (tab: Tab<TData>) => ReactNode;
+	getTabTitle?: (tab: Tab<TData>) => string | undefined;
 	renderEmptyState?: () => ReactNode;
 	renderAddTabMenu?: () => ReactNode;
+	renderBelowTabBar?: () => ReactNode;
 	onBeforeClosePane?: (
 		pane: Pane<TData>,
 		tab: Tab<TData>,
