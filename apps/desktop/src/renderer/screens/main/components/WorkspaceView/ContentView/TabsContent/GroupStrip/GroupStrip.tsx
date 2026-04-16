@@ -448,37 +448,32 @@ export function GroupStrip() {
 			{/* Action bar: Terminal | Chat | presets… ··· RunButton */}
 			<div className="flex h-10 items-center border-b border-border shrink-0">
 				<div className="flex-1 min-w-0">
-					<NewTabDropZone
-						onDrop={movePaneToNewTab}
-						isLastPaneInTab={checkIsLastPaneInTab}
+					<div
+						className="flex items-center gap-0.5 flex-1 px-1 overflow-x-auto"
+						style={{ scrollbarWidth: "none" }}
 					>
-						<div
-							className="flex items-center gap-0.5 flex-1 px-1 overflow-x-auto"
-							style={{ scrollbarWidth: "none" }}
-						>
-							{pinnedPresets.map(({ preset, index }, pinnedIndex) => {
-								const hotkeyId = PRESET_HOTKEY_IDS[index];
-								return (
-									<PresetBarItem
-										key={preset.id}
-										preset={preset}
-										pinnedIndex={pinnedIndex}
-										hotkeyId={hotkeyId}
-										isDark={isDark}
-										canOpen={!!activeWorkspaceId}
-										canOpenInCurrentTerminal={canOpenInCurrentTerminal}
-										onOpenDefault={handleOpenPreset}
-										onOpenInCurrentTerminal={handleOpenPresetInCurrentTerminal}
-										onOpenInNewTab={handleOpenPresetInNewTab}
-										onOpenInPane={handleOpenPresetInPane}
-										onEdit={handleEditPreset}
-										onLocalReorder={handleLocalPinnedReorder}
-										onPersistReorder={handlePersistPinnedReorder}
-									/>
-								);
-							})}
-						</div>
-					</NewTabDropZone>
+						{pinnedPresets.map(({ preset, index }, pinnedIndex) => {
+							const hotkeyId = PRESET_HOTKEY_IDS[index];
+							return (
+								<PresetBarItem
+									key={preset.id}
+									preset={preset}
+									pinnedIndex={pinnedIndex}
+									hotkeyId={hotkeyId}
+									isDark={isDark}
+									canOpen={!!activeWorkspaceId}
+									canOpenInCurrentTerminal={canOpenInCurrentTerminal}
+									onOpenDefault={handleOpenPreset}
+									onOpenInCurrentTerminal={handleOpenPresetInCurrentTerminal}
+									onOpenInNewTab={handleOpenPresetInNewTab}
+									onOpenInPane={handleOpenPresetInPane}
+									onEdit={handleEditPreset}
+									onLocalReorder={handleLocalPinnedReorder}
+									onPersistReorder={handlePersistPinnedReorder}
+								/>
+							);
+						})}
+					</div>
 				</div>
 				{activeWorkspaceId && (
 					<div className="flex items-center px-2 shrink-0 border-l border-border h-full">
@@ -492,7 +487,11 @@ export function GroupStrip() {
 			</div>
 
 			{/* Tabs bar */}
-			<div className="flex h-10 min-w-0 items-stretch border-b border-border shrink-0">
+			<NewTabDropZone
+				onDrop={movePaneToNewTab}
+				isLastPaneInTab={checkIsLastPaneInTab}
+				className="relative flex h-10 min-w-0 items-stretch border-b border-border shrink-0"
+			>
 				<div
 					ref={scrollContainerRef}
 					className="flex min-w-0 flex-1 items-stretch overflow-x-auto overflow-y-hidden"
@@ -529,7 +528,7 @@ export function GroupStrip() {
 						</button>
 					</div>
 				</div>
-			</div>
+			</NewTabDropZone>
 		</div>
 	);
 }
