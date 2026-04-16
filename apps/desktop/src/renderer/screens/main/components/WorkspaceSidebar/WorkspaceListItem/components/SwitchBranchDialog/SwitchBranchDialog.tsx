@@ -133,7 +133,9 @@ export function SwitchBranchDialog({
 				}}
 			>
 				<DialogHeader className="px-4 pt-4 pb-3 border-b border-border">
-					<DialogTitle className="text-sm font-medium">Switch branch</DialogTitle>
+					<DialogTitle className="text-sm font-medium">
+						Switch branch
+					</DialogTitle>
 				</DialogHeader>
 
 				<div className="px-3 pt-3 pb-2">
@@ -178,8 +180,7 @@ export function SwitchBranchDialog({
 										"flex items-center gap-2 w-full px-3 py-1.5 text-xs text-left",
 										"hover:bg-accent transition-colors",
 										isCurrent && "font-medium",
-										isCheckedOutElsewhere &&
-											"opacity-50 cursor-not-allowed",
+										isCheckedOutElsewhere && "opacity-50 cursor-not-allowed",
 										switchBranch.isPending &&
 											switchBranch.variables?.branch === branch &&
 											"opacity-70",
@@ -211,7 +212,10 @@ export function SwitchBranchDialog({
 								return (
 									<Tooltip key={branch} delayDuration={300}>
 										<TooltipTrigger asChild>{item}</TooltipTrigger>
-										<TooltipContent side="right" className="text-xs max-w-[220px]">
+										<TooltipContent
+											side="right"
+											className="text-xs max-w-[220px]"
+										>
 											Checked out in another workspace
 										</TooltipContent>
 									</Tooltip>

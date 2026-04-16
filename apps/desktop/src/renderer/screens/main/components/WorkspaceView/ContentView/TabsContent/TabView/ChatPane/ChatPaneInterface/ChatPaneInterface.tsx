@@ -10,7 +10,6 @@ import {
 	PromptInputProvider,
 	useProviderAttachments,
 } from "@superset/ui/ai-elements/prompt-input";
-import { useQuery } from "@tanstack/react-query";
 import type { ChatStatus } from "ai";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -21,10 +20,7 @@ import type {
 	ModelOption,
 	PermissionMode,
 } from "renderer/components/Chat/ChatInterface/types";
-import {
-	getDesktopChatModelOptions,
-	isDesktopChatDevMode,
-} from "renderer/lib/dev-chat";
+import { getDesktopChatModelOptions } from "renderer/lib/dev-chat";
 import { posthog } from "renderer/lib/posthog";
 import { useChatPreferencesStore } from "renderer/stores/chat-preferences";
 import { useTabsStore } from "renderer/stores/tabs/store";

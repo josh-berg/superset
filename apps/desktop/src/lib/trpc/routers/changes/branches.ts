@@ -1,4 +1,4 @@
-import { projects, worktrees, workspaces } from "@superset/local-db";
+import { projects, workspaces, worktrees } from "@superset/local-db";
 import { and, eq } from "drizzle-orm";
 import { localDb } from "main/lib/local-db";
 import type { SimpleGit } from "simple-git";

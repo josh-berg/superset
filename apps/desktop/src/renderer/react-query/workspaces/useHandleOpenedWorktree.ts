@@ -50,6 +50,7 @@ export function useHandleOpenedWorktree() {
 			utils.projects.getRecents,
 			utils.workspaces,
 			writeToTerminal,
+			utils,
 		],
 	);
 }

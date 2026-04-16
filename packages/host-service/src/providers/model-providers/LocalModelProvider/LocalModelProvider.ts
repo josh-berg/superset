@@ -7,10 +7,7 @@ import {
 import { applyRuntimeEnv } from "../utils/runtime-env";
 import { hasUsableCredential, resolveAnthropicCredential } from "./utils";
 
-const CLEANUP_KEYS = [
-	"ANTHROPIC_API_KEY",
-	"ANTHROPIC_AUTH_TOKEN",
-] as const;
+const CLEANUP_KEYS = ["ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"] as const;
 
 interface LocalModelProviderOptions {
 	anthropicEnvConfigPath?: string;

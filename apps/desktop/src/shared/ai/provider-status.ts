@@ -65,7 +65,7 @@ export interface ModelProviderStatus {
 	capabilities: ProviderCapabilities;
 }
 
-export function getProviderName(providerId: ProviderId): string {
+export function getProviderName(_providerId: ProviderId): string {
 	return "Anthropic";
 }
 

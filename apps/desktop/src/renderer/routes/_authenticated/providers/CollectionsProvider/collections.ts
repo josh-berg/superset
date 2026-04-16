@@ -7,7 +7,7 @@ import {
 	localOnlyCollectionOptions,
 	localStorageCollectionOptions,
 } from "@tanstack/react-db";
-import { z } from "zod";
+import type { z } from "zod";
 import {
 	type DashboardSidebarProjectRow,
 	type DashboardSidebarSectionRow,

@@ -119,15 +119,13 @@ export function ChatInputFooter({
 										maxFileSize={10 * 1024 * 1024}
 										globalDrop
 									>
-										<ChatShortcuts
-											isFocused={isFocused}
-										/>
+										<ChatShortcuts isFocused={isFocused} />
 										<FileDropOverlay visible={dragType === "files"} />
 										<PromptInputAttachments>
 											{renderAttachment ??
 												((file) => <PromptInputAttachment data={file} />)}
 										</PromptInputAttachments>
-											<SlashCommandPreview
+										<SlashCommandPreview
 											cwd={cwd}
 											slashCommands={slashCommands}
 										/>
@@ -149,7 +147,7 @@ export function ChatInputFooter({
 											submitStatus={submitStatus}
 											submitDisabled={submitDisabled}
 											onStop={onStop}
-													/>
+										/>
 									</PromptInput>
 								</div>
 							</MentionAnchor>

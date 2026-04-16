@@ -381,7 +381,9 @@ export function WorkspaceListItem({
 							>
 								{isBranchWorkspace
 									? "local"
-									: (worktreePath.split("/").filter(Boolean).pop() ?? name ?? branch)}
+									: (worktreePath.split("/").filter(Boolean).pop() ??
+										name ??
+										branch)}
 							</span>
 
 							{isBranchWorkspace && aheadBehind && (

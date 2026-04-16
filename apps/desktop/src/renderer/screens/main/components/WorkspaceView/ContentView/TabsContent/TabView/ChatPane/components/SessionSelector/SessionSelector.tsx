@@ -12,8 +12,8 @@ import {
 	HiMiniChevronDown,
 	HiMiniPlus,
 } from "react-icons/hi2";
-import { getRelativeTime } from "./utils";
 import { SessionSelectorItem } from "./components/SessionSelectorItem";
+import { getRelativeTime } from "./utils";
 
 interface SessionItem {
 	sessionId: string;

@@ -7,6 +7,7 @@ import { createBrowserHistoryRouter } from "./browser-history";
 import { createChangesRouter } from "./changes";
 import { createChatRuntimeServiceRouter } from "./chat-runtime-service";
 import { createChatServiceRouter } from "./chat-service";
+import { createClaudeCostsRouter } from "./claude-costs";
 import { createConfigRouter } from "./config";
 import { createExternalRouter } from "./external";
 import { createFilesystemRouter } from "./filesystem";
@@ -44,6 +45,7 @@ export const createAppRouter = (getWindow: () => BrowserWindow | null) => {
 		permissions: createPermissionsRouter(),
 		ports: createPortsRouter(),
 		resourceMetrics: createResourceMetricsRouter(),
+		claudeCosts: createClaudeCostsRouter(),
 		menu: createMenuRouter(),
 		external: createExternalRouter(),
 		settings: createSettingsRouter(),

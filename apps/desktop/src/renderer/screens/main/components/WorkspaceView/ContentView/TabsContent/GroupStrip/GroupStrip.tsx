@@ -11,15 +11,12 @@ import {
 	useState,
 } from "react";
 import { LuPlus } from "react-icons/lu";
-import {
-	getPresetIcon,
-	useIsDarkTheme,
-} from "renderer/assets/app-icons/preset-icons";
+import { useIsDarkTheme } from "renderer/assets/app-icons/preset-icons";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { usePresets } from "renderer/react-query/presets";
-import { useCollections } from "renderer/routes/_authenticated/providers/CollectionsProvider";
 import { WorkspaceRunButton } from "renderer/routes/_authenticated/_dashboard/components/TopBar/components/WorkspaceRunButton";
 import { PRESET_HOTKEY_IDS } from "renderer/routes/_authenticated/_dashboard/workspace/$workspaceId/hooks/usePresetHotkeys";
+import { useCollections } from "renderer/routes/_authenticated/providers/CollectionsProvider";
 import { requestTabClose } from "renderer/stores/editor-state/editorCoordinator";
 import { useTabsStore } from "renderer/stores/tabs/store";
 import { useTabsWithPresets } from "renderer/stores/tabs/useTabsWithPresets";
@@ -98,7 +95,7 @@ export function GroupStrip() {
 	const panes = useTabsStore((s) => s.panes);
 	const activeTabIds = useTabsStore((s) => s.activeTabIds);
 	const tabHistoryStacks = useTabsStore((s) => s.tabHistoryStacks);
-const renameTab = useTabsStore((s) => s.renameTab);
+	const renameTab = useTabsStore((s) => s.renameTab);
 	const setActiveTab = useTabsStore((s) => s.setActiveTab);
 	const movePaneToTab = useTabsStore((s) => s.movePaneToTab);
 	const movePaneToNewTab = useTabsStore((s) => s.movePaneToNewTab);
@@ -292,7 +289,7 @@ const renameTab = useTabsStore((s) => s.renameTab);
 		addTab(activeWorkspaceId);
 	};
 
-const handleOpenPreset = useCallback(
+	const handleOpenPreset = useCallback(
 		(preset: TerminalPreset) => {
 			if (!activeWorkspaceId) return;
 			openPreset(activeWorkspaceId, preset, { target: "active-tab" });
@@ -416,7 +413,7 @@ const handleOpenPreset = useCallback(
 	// Overflow detection for tabs bar
 	const scrollContainerRef = useRef<HTMLDivElement>(null);
 	const tabsTrackRef = useRef<HTMLDivElement>(null);
-	const [hasTabOverflow, setHasTabOverflow] = useState(false);
+	const [_hasTabOverflow, setHasTabOverflow] = useState(false);
 
 	const updateOverflow = useCallback(() => {
 		const container = scrollContainerRef.current;

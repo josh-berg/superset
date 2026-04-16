@@ -153,6 +153,6 @@ export function ProjectThumbnail({
 			style={fallbackStyle}
 		>
 			{displayLetter}
-</div>
+		</div>
 	);
 }

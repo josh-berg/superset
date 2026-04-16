@@ -37,7 +37,6 @@ export function syncRuntimeHookSessionId(runtime: RuntimeSession): void {
 	runtime.hookManager?.setSessionId(runtime.sessionId);
 }
 
-
 interface TextContentPart {
 	type: "text";
 	text: string;

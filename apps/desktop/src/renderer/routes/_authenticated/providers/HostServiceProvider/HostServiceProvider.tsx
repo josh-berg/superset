@@ -37,9 +37,10 @@ export function HostServiceProvider({ children }: { children: ReactNode }) {
 			});
 	}, [utils]);
 
-	const { data: portData } = electronTrpc.hostServiceManager.getLocalPort.useQuery({
-		organizationId: MOCK_ORG_ID,
-	});
+	const { data: portData } =
+		electronTrpc.hostServiceManager.getLocalPort.useQuery({
+			organizationId: MOCK_ORG_ID,
+		});
 
 	const services = useMemo(() => {
 		const map = new Map<string, OrgService>();

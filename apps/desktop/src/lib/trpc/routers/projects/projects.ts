@@ -313,9 +313,7 @@ async function getCheckedOutBranches(
 		const blocks = output.split(/\n\n+/);
 		for (let i = 0; i < blocks.length; i++) {
 			const block = blocks[i];
-			const branchLine = block
-				.split("\n")
-				.find((l) => l.startsWith("branch "));
+			const branchLine = block.split("\n").find((l) => l.startsWith("branch "));
 			if (!branchLine) continue;
 			const ref = branchLine.slice("branch ".length).trim();
 			const name = ref.startsWith("refs/heads/")

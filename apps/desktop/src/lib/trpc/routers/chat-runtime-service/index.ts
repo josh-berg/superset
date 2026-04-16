@@ -1,9 +1,9 @@
 import type { LifecycleEvent } from "@superset/chat/server/trpc";
 import { ChatRuntimeService } from "@superset/chat/server/trpc";
-import { env } from "main/env.main";
 import { appState } from "main/lib/app-state";
 import { notificationsEmitter } from "main/lib/notifications/server";
 import { NOTIFICATION_EVENTS } from "shared/constants";
+
 function resolveNotificationIdsFromSession(sessionId: string): {
 	paneId?: string;
 	tabId?: string;

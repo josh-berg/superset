@@ -158,7 +158,10 @@ export function ModelsSettings({ visibleItems }: ModelsSettingsProps) {
 	};
 
 	const renderAnthropicAction = () => {
-		if (!anthropicStatus || anthropicStatus.connectionState === "disconnected") {
+		if (
+			!anthropicStatus ||
+			anthropicStatus.connectionState === "disconnected"
+		) {
 			return (
 				<Button
 					variant="outline"

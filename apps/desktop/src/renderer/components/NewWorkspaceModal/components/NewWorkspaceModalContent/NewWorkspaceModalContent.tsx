@@ -10,29 +10,29 @@ import {
 } from "@superset/ui/command";
 import { Input } from "@superset/ui/input";
 import { Label } from "@superset/ui/label";
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@superset/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@superset/ui/popover";
 import { toast } from "@superset/ui/sonner";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
-} from "@superset/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@superset/ui/tooltip";
 import { useNavigate } from "@tanstack/react-router";
 import Fuse from "fuse.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GoArrowUpRight, GoGitBranch, GoGlobe } from "react-icons/go";
-import { LuCheck, LuChevronDown, LuChevronLeft, LuFolderGit, LuFolderOpen, LuHouse, LuLock, LuPlus } from "react-icons/lu";
-import { sanitizeBranchNameWithMaxLength } from "shared/utils/branch";
-import { cn } from "@superset/ui/utils";
+import {
+	LuCheck,
+	LuChevronDown,
+	LuChevronLeft,
+	LuFolderGit,
+	LuFolderOpen,
+	LuHouse,
+	LuLock,
+	LuPlus,
+} from "react-icons/lu";
 import { useDebouncedValue } from "renderer/hooks/useDebouncedValue";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { useOpenProject } from "renderer/react-query/projects";
 import { navigateToWorkspace } from "renderer/routes/_authenticated/_dashboard/utils/workspace-navigation";
 import { ProjectThumbnail } from "renderer/screens/main/components/WorkspaceSidebar/ProjectSection/ProjectThumbnail";
+import { sanitizeBranchNameWithMaxLength } from "shared/utils/branch";
 import { useNewWorkspaceModalDraft } from "../../NewWorkspaceModalDraftContext";
 
 const COMMAND_CLASS_NAME =
@@ -139,7 +139,8 @@ export function NewWorkspaceModalContent({
 	);
 	const branchData = remoteBranchData ?? localBranchData;
 
-	const { data: allWorkspaces = [] } = electronTrpc.workspaces.getAll.useQuery();
+	const { data: allWorkspaces = [] } =
+		electronTrpc.workspaces.getAll.useQuery();
 	const activeWorkspacesByBranch = useMemo(() => {
 		const map = new Map<string, string>();
 		for (const ws of allWorkspaces) {
@@ -218,7 +219,11 @@ export function NewWorkspaceModalContent({
 
 	const handleCreateNewBranch = useCallback(() => {
 		if (!projectId) return;
-		const sanitized = sanitizeBranchNameWithMaxLength(newBranchName.trim(), undefined, { preserveCase: true });
+		const sanitized = sanitizeBranchNameWithMaxLength(
+			newBranchName.trim(),
+			undefined,
+			{ preserveCase: true },
+		);
 		if (!sanitized) {
 			toast.error("Invalid branch name");
 			return;
@@ -235,10 +240,18 @@ export function NewWorkspaceModalContent({
 			error: (err) =>
 				err instanceof Error ? err.message : "Failed to create workspace",
 		});
-		promise.then(() => closeAndResetDraft()).catch(() => {
-			// Keep modal open so the user can retry
-		});
-	}, [projectId, newBranchName, parentBranch, createWorkspace, closeAndResetDraft]);
+		promise
+			.then(() => closeAndResetDraft())
+			.catch(() => {
+				// Keep modal open so the user can retry
+			});
+	}, [
+		projectId,
+		newBranchName,
+		parentBranch,
+		createWorkspace,
+		closeAndResetDraft,
+	]);
 
 	const handleBranchAction = useCallback(
 		(branchName: string, existingWorkspaceId: string | undefined) => {
@@ -262,9 +275,11 @@ export function NewWorkspaceModalContent({
 				error: (err) =>
 					err instanceof Error ? err.message : "Failed to create workspace",
 			});
-			promise.then(() => closeAndResetDraft()).catch(() => {
-				// Keep modal open so the user can retry
-			});
+			promise
+				.then(() => closeAndResetDraft())
+				.catch(() => {
+					// Keep modal open so the user can retry
+				});
 		},
 		[closeAndResetDraft, createWorkspace, navigate, projectId],
 	);
@@ -389,7 +404,9 @@ export function NewWorkspaceModalContent({
 								>
 									<span className="flex items-center gap-2 truncate">
 										<GoGitBranch className="size-3.5 shrink-0 text-muted-foreground" />
-										<span className="font-mono truncate">{parentBranch || defaultBranch || "Select branch"}</span>
+										<span className="font-mono truncate">
+											{parentBranch || defaultBranch || "Select branch"}
+										</span>
 									</span>
 									<LuChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
 								</button>
@@ -416,7 +433,9 @@ export function NewWorkspaceModalContent({
 													className="flex items-center gap-2"
 												>
 													<GoGitBranch className="size-3.5 shrink-0 text-muted-foreground" />
-													<span className="font-mono truncate flex-1 text-xs">{b.name}</span>
+													<span className="font-mono truncate flex-1 text-xs">
+														{b.name}
+													</span>
 													{(parentBranch || defaultBranch) === b.name && (
 														<LuCheck className="size-3.5 shrink-0" />
 													)}
@@ -530,22 +549,24 @@ export function NewWorkspaceModalContent({
 												</span>
 											</TooltipTrigger>
 											<TooltipContent>
-												This branch is checked out in the main repository — the local workspace will be selected
+												This branch is checked out in the main repository — the
+												local workspace will be selected
 											</TooltipContent>
 										</Tooltip>
 									)}
-									{branch.checkedOutIn === "worktree" && !existingWorkspaceId && (
-										<Tooltip>
-											<TooltipTrigger asChild>
-												<span className="shrink-0 flex items-center">
-													<LuLock className="size-3.5 text-muted-foreground" />
-												</span>
-											</TooltipTrigger>
-											<TooltipContent>
-												This branch is already checked out in another worktree
-											</TooltipContent>
-										</Tooltip>
-									)}
+									{branch.checkedOutIn === "worktree" &&
+										!existingWorkspaceId && (
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<span className="shrink-0 flex items-center">
+														<LuLock className="size-3.5 text-muted-foreground" />
+													</span>
+												</TooltipTrigger>
+												<TooltipContent>
+													This branch is already checked out in another worktree
+												</TooltipContent>
+											</Tooltip>
+										)}
 									<Button
 										size="xs"
 										className="shrink-0 hidden group-data-[selected=true]:inline-flex"

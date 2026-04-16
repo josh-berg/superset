@@ -1,7 +1,7 @@
 import { useParams } from "@tanstack/react-router";
 import { electronTrpc } from "renderer/lib/electron-trpc";
-import { getWorkspaceDisplayName } from "renderer/lib/getWorkspaceDisplayName";
 import { SidebarControl } from "renderer/screens/main/components/SidebarControl";
+import { ClaudeCosts } from "./components/ClaudeCosts";
 import { NavigationControls } from "./components/NavigationControls";
 import { OpenInMenuButton } from "./components/OpenInMenuButton";
 import { ResourceConsumption } from "./components/ResourceConsumption";
@@ -29,9 +29,10 @@ export function TopBar() {
 				<SidebarToggle />
 				<NavigationControls />
 				<ResourceConsumption />
+				<ClaudeCosts />
 			</div>
 
-<div className="flex items-center gap-3 h-full pr-4 shrink-0">
+			<div className="flex items-center gap-3 h-full pr-4 shrink-0">
 				{workspace?.worktreePath ? (
 					<OpenInMenuButton
 						worktreePath={workspace.worktreePath}

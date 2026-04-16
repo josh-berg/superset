@@ -222,7 +222,8 @@ export function ChangesView({
 			if (!worktreePath) return;
 
 			const selectedAbsolutePath = selectedFileState?.absolutePath ?? null;
-			pendingRefreshRef.current.invalidateBranches ||= event.type === "overflow";
+			pendingRefreshRef.current.invalidateBranches ||=
+				event.type === "overflow";
 			pendingRefreshRef.current.invalidateSelectedFile ||=
 				eventTargetsSelectedFile(event, selectedAbsolutePath);
 

@@ -134,7 +134,7 @@ export function PresetsSection({
 		}
 	}, [editingPresetId, localPresets, setEditingPreset]);
 
-	const existingPresetNames = useMemo(
+	const _existingPresetNames = useMemo(
 		() => new Set(serverPresets.map((preset) => preset.name)),
 		[serverPresets],
 	);

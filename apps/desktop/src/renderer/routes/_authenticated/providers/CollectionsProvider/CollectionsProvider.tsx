@@ -1,9 +1,4 @@
-import {
-	createContext,
-	type ReactNode,
-	useContext,
-	useEffect,
-} from "react";
+import { createContext, type ReactNode, useContext, useEffect } from "react";
 import { MOCK_ORG_ID } from "shared/constants";
 import { getCollections, preloadCollections } from "./collections";
 

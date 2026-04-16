@@ -13,7 +13,10 @@ interface NewWorkspaceModalState {
 	preSelectedProjectId: string | null;
 	skipProjectStep: boolean;
 	pendingWorkspace: PendingWorkspace | null;
-	openModal: (projectId?: string, options?: { skipProjectStep?: boolean }) => void;
+	openModal: (
+		projectId?: string,
+		options?: { skipProjectStep?: boolean },
+	) => void;
 	closeModal: () => void;
 	setPendingWorkspace: (workspace: PendingWorkspace | null) => void;
 	clearPendingWorkspace: (id: string) => void;
@@ -31,7 +34,10 @@ export const useNewWorkspaceModalStore = create<NewWorkspaceModalState>()(
 			skipProjectStep: false,
 			pendingWorkspace: null,
 
-			openModal: (projectId?: string, options?: { skipProjectStep?: boolean }) => {
+			openModal: (
+				projectId?: string,
+				options?: { skipProjectStep?: boolean },
+			) => {
 				set({
 					isOpen: true,
 					preSelectedProjectId: projectId ?? null,
@@ -40,7 +46,11 @@ export const useNewWorkspaceModalStore = create<NewWorkspaceModalState>()(
 			},
 
 			closeModal: () => {
-				set({ isOpen: false, preSelectedProjectId: null, skipProjectStep: false });
+				set({
+					isOpen: false,
+					preSelectedProjectId: null,
+					skipProjectStep: false,
+				});
 			},
 
 			setPendingWorkspace: (workspace: PendingWorkspace | null) => {

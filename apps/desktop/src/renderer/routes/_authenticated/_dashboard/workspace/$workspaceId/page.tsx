@@ -1,6 +1,6 @@
 import type { ExternalApp } from "@superset/local-db";
 import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useCopyToClipboard } from "renderer/hooks/useCopyToClipboard";
 import { useFileOpenMode } from "renderer/hooks/useFileOpenMode";
 import { useHotkey } from "renderer/hotkeys";
@@ -461,7 +461,7 @@ function WorkspacePage() {
 					/>
 				)}
 			</div>
-<UnsavedChangesDialog
+			<UnsavedChangesDialog
 				open={pendingTabClose !== null}
 				onOpenChange={(open) => {
 					if (!open) {

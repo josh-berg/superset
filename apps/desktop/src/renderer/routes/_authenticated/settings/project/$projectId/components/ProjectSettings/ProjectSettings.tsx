@@ -615,7 +615,8 @@ export function ProjectSettings({
 						<div className="space-y-0.5">
 							<Label className="text-sm font-medium">Icon Letter</Label>
 							<p className="text-xs text-muted-foreground">
-								Override the letter shown in the sidebar icon (max 2 characters).
+								Override the letter shown in the sidebar icon (max 2
+								characters).
 							</p>
 						</div>
 						<Input
