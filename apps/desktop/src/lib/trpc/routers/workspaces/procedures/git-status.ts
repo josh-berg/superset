@@ -270,36 +270,36 @@ export const createGitStatusProcedures = () => {
 
 				const total = staleEntries.length;
 				const fetchedWorkspaceIds: string[] = [];
-				let fetchDone = 0;
 				gitBatchProgressEmitter.emit("progress", {
 					operation: "fetch",
 					done: 0,
 					total,
 				} satisfies GitBatchProgress);
 
-				await Promise.all(
-					staleEntries.map(async ({ project, workspaces: repoWorkspaces }) => {
-						try {
-							await fetchRemote(project.mainRepoPath);
-							const ids = repoWorkspaces.map((w) => w.id);
-							localDb
-								.update(workspaces)
-								.set({ lastFetchedAt: now })
-								.where(inArray(workspaces.id, ids))
-								.run();
-							fetchedWorkspaceIds.push(...ids);
-						} catch {
-							// Offline or no remote — leave lastFetchedAt unchanged so we
-							// retry on the next tick.
-						} finally {
-							gitBatchProgressEmitter.emit("progress", {
-								operation: "fetch",
-								done: ++fetchDone,
-								total,
-							} satisfies GitBatchProgress);
-						}
-					}),
-				);
+				for (const [
+					index,
+					{ project, workspaces: repoWorkspaces },
+				] of staleEntries.entries()) {
+					try {
+						await fetchRemote(project.mainRepoPath);
+						const ids = repoWorkspaces.map((w) => w.id);
+						localDb
+							.update(workspaces)
+							.set({ lastFetchedAt: now })
+							.where(inArray(workspaces.id, ids))
+							.run();
+						fetchedWorkspaceIds.push(...ids);
+					} catch {
+						// Offline or no remote — leave lastFetchedAt unchanged so we
+						// retry on the next tick.
+					} finally {
+						gitBatchProgressEmitter.emit("progress", {
+							operation: "fetch",
+							done: index + 1,
+							total,
+						} satisfies GitBatchProgress);
+					}
+				}
 
 				return { fetchedWorkspaceIds };
 			}),
@@ -350,32 +350,26 @@ export const createGitStatusProcedures = () => {
 				const pulled: string[] = [];
 				const skipped: { workspaceId: string; reason: PullAllSkipReason }[] =
 					[];
-				let pullDone = 0;
 				gitBatchProgressEmitter.emit("progress", {
 					operation: "pull",
 					done: 0,
 					total,
 				} satisfies GitBatchProgress);
 
-				await Promise.all(
-					eligible.map(async ({ workspace, worktreePath }) => {
-						const result = await pullWorktreeIfClean(worktreePath);
-						if (result.status === "pulled") {
-							pulled.push(workspace.id);
-							clearStatusCacheForWorktree(worktreePath);
-						} else {
-							skipped.push({
-								workspaceId: workspace.id,
-								reason: result.reason,
-							});
-						}
-						gitBatchProgressEmitter.emit("progress", {
-							operation: "pull",
-							done: ++pullDone,
-							total,
-						} satisfies GitBatchProgress);
-					}),
-				);
+				for (const [index, { workspace, worktreePath }] of eligible.entries()) {
+					const result = await pullWorktreeIfClean(worktreePath);
+					if (result.status === "pulled") {
+						pulled.push(workspace.id);
+						clearStatusCacheForWorktree(worktreePath);
+					} else {
+						skipped.push({ workspaceId: workspace.id, reason: result.reason });
+					}
+					gitBatchProgressEmitter.emit("progress", {
+						operation: "pull",
+						done: index + 1,
+						total,
+					} satisfies GitBatchProgress);
+				}
 
 				return { pulled, skipped };
 			}),
