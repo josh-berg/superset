@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { basename, join } from "node:path";
 import {
@@ -337,6 +338,21 @@ export const createFeatureProjectsRouter = () => {
 					.all();
 			}),
 
+		/** Check which repo names already have a local clone in <projectsRootDir>/repos/. */
+		getLocalCloneAvailability: publicProcedure
+			.input(z.object({ repoNames: z.array(z.string()) }))
+			.query(({ input }) => {
+				const currentSettings = localDb.select().from(settings).get();
+				const projectsRootDir = currentSettings?.projectsRootDir;
+				if (!projectsRootDir) return {} as Record<string, boolean>;
+				return Object.fromEntries(
+					input.repoNames.map((name) => [
+						name,
+						existsSync(join(projectsRootDir, "repos", name, ".git")),
+					]),
+				) as Record<string, boolean>;
+			}),
+
 		/** Clone a GitHub repo into the feature project folder and create a child project. */
 		addRepo: publicProcedure
 			.input(
@@ -371,13 +387,84 @@ export const createFeatureProjectsRouter = () => {
 
 				const clonePath = join(featureProject.mainRepoPath, repoName);
 
-				// Clone the repository
+				// Idempotency: if this repo was already successfully cloned in a prior
+				// attempt, skip cloning and return the existing record.
+				const existingChild = localDb
+					.select()
+					.from(projects)
+					.where(
+						and(
+							eq(projects.mainRepoPath, clonePath),
+							eq(projects.parentProjectId, input.featureProjectId),
+						),
+					)
+					.get();
+
+				if (existingChild && existsSync(clonePath)) {
+					const existingWorkspace = localDb
+						.select()
+						.from(workspaces)
+						.where(eq(workspaces.projectId, existingChild.id))
+						.get();
+					const workspaceId =
+						existingWorkspace?.id ??
+						ensureChildRepoWorkspace(
+							existingChild,
+							existingChild.defaultBranch ?? "main",
+						);
+					return { project: existingChild, workspaceId };
+				}
+
+				// Clone the repository — prefer a fast local clone if the repo already
+				// exists in <projectsRootDir>/repos/, otherwise fall back to gh.
+				const currentSettings = localDb.select().from(settings).get();
+				const projectsRootDir = currentSettings?.projectsRootDir;
+				const localRepoPath = projectsRootDir
+					? join(projectsRootDir, "repos", repoName)
+					: null;
+				const useLocalClone =
+					localRepoPath !== null &&
+					existsSync(join(localRepoPath, ".git"));
+
 				try {
-					await execWithShellEnv(
-						"gh",
-						["repo", "clone", input.repoFullName, clonePath],
-						{ timeout: 120_000 },
-					);
+					if (useLocalClone && localRepoPath) {
+						// Local clone shares git objects via hardlinks — much faster for large repos
+						await execWithShellEnv(
+							"git",
+							["clone", "--local", localRepoPath, clonePath],
+							{ timeout: 30_000 },
+						);
+						// Fix remote so it points to GitHub, not the local source
+						await execWithShellEnv(
+							"git",
+							[
+								"-C",
+								clonePath,
+								"remote",
+								"set-url",
+								"origin",
+								`https://github.com/${input.repoFullName}.git`,
+							],
+							{ timeout: 5_000 },
+						);
+						// Fetch latest from GitHub — non-fatal: some repos have branches that
+						// differ only by case and fail on macOS's case-insensitive filesystem.
+						try {
+							await execWithShellEnv(
+								"git",
+								["-C", clonePath, "fetch", "origin"],
+								{ timeout: 60_000 },
+							);
+						} catch {
+							// Clone is still usable; local state from source repo is sufficient
+						}
+					} else {
+						await execWithShellEnv(
+							"gh",
+							["repo", "clone", input.repoFullName, clonePath],
+							{ timeout: 120_000 },
+						);
+					}
 				} catch (err) {
 					const msg = err instanceof Error ? err.message : String(err);
 					throw new TRPCError({
@@ -388,6 +475,18 @@ export const createFeatureProjectsRouter = () => {
 
 				const defaultBranch =
 					input.parentBranch ?? (await getDefaultBranch(clonePath));
+
+				// For local clones, ensure the default branch is checked out and up to date
+				// with GitHub (the local source may have been behind or diverged).
+				if (useLocalClone) {
+					const syncGit = await getSimpleGitWithShellPath(clonePath);
+					try {
+						await syncGit.checkout(defaultBranch);
+						await syncGit.pull("origin", defaultBranch, ["--ff-only"]);
+					} catch {
+						// Non-fatal: the clone is still usable even if the pull fails
+					}
+				}
 
 				// Create or checkout the feature branch (only when a branch name was supplied)
 				if (input.branchName) {

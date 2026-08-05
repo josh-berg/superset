@@ -8,8 +8,9 @@ import {
 } from "@superset/ui/dialog";
 import { Input } from "@superset/ui/input";
 import { toast } from "@superset/ui/sonner";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@superset/ui/tooltip";
 import { useState } from "react";
-import { LuCheck, LuLoader } from "react-icons/lu";
+import { LuCheck, LuCloud, LuHardDrive, LuLoader } from "react-icons/lu";
 import type { RepoSelection } from "renderer/components/RepoPicker";
 import { RepoPicker } from "renderer/components/RepoPicker";
 import { electronTrpc } from "renderer/lib/electron-trpc";
@@ -33,6 +34,12 @@ export function AddRepoDialog({
 	const [addingRepoIndex, setAddingRepoIndex] = useState<number | null>(null);
 
 	const addRepo = electronTrpc.featureProjects.addRepo.useMutation();
+
+	const localCloneAvailability =
+		electronTrpc.featureProjects.getLocalCloneAvailability.useQuery(
+			{ repoNames: selectedRepos.map((r) => r.name) },
+			{ enabled: selectedRepos.length > 0 },
+		);
 
 	const resetState = () => {
 		setBranchName("");
@@ -136,6 +143,8 @@ export function AddRepoDialog({
 						{selectedRepos.map((repo, i) => {
 							const isDone = addingRepoIndex !== null && i < addingRepoIndex;
 							const isCurrent = addingRepoIndex === i;
+							const isLocal =
+								localCloneAvailability.data?.[repo.name] ?? false;
 
 							return (
 								<div
@@ -160,6 +169,22 @@ export function AddRepoDialog({
 									>
 										{repo.name}
 									</span>
+									{(isCurrent || isDone) && (
+										<Tooltip>
+											<TooltipTrigger asChild>
+												<span className="ml-auto text-muted-foreground">
+													{isLocal ? (
+														<LuHardDrive className="size-3.5" />
+													) : (
+														<LuCloud className="size-3.5" />
+													)}
+												</span>
+											</TooltipTrigger>
+											<TooltipContent>
+												{isLocal ? "Local clone" : "Remote clone"}
+											</TooltipContent>
+										</Tooltip>
+									)}
 								</div>
 							);
 						})}

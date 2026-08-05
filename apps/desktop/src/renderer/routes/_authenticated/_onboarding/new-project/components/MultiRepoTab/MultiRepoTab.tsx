@@ -1,8 +1,9 @@
 import { Button } from "@superset/ui/button";
 import { Input } from "@superset/ui/input";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@superset/ui/tooltip";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { LuCheck, LuLoader, LuPlus } from "react-icons/lu";
+import { LuCheck, LuCloud, LuHardDrive, LuLoader, LuPlus } from "react-icons/lu";
 import type { RepoSelection } from "renderer/components/RepoPicker";
 import { RepoPicker } from "renderer/components/RepoPicker";
 import { electronTrpc } from "renderer/lib/electron-trpc";
@@ -38,6 +39,12 @@ export function MultiRepoTab({
 	const createFeatureProject =
 		electronTrpc.featureProjects.create.useMutation();
 	const addRepo = electronTrpc.featureProjects.addRepo.useMutation();
+
+	const localCloneAvailability =
+		electronTrpc.featureProjects.getLocalCloneAvailability.useQuery(
+			{ repoNames: selectedRepos.map((r) => r.name) },
+			{ enabled: selectedRepos.length > 0 },
+		);
 
 	const isRepoSelected = (fullName: string) =>
 		selectedRepos.some((r) => r.fullName === fullName);
@@ -105,6 +112,8 @@ export function MultiRepoTab({
 		onStepChange?.("creating");
 		onCreatingChange?.(true);
 
+		const added: string[] = [];
+
 		try {
 			const { project, workspaceId } = await createFeatureProject.mutateAsync({
 				name: projectName.trim(),
@@ -120,6 +129,7 @@ export function MultiRepoTab({
 					branchName: branchName.trim() || undefined,
 					parentBranch: repo.parentBranch.trim() || undefined,
 				});
+				added.push(repo.fullName);
 			}
 
 			setAddingRepoIndex(null);
@@ -140,6 +150,10 @@ export function MultiRepoTab({
 				}
 			}, 800);
 		} catch (err) {
+			// Drop repos that cloned successfully so a retry only attempts the remainder.
+			setSelectedRepos((prev) =>
+				prev.filter((r) => !added.includes(r.fullName)),
+			);
 			setStep("select-repos");
 			onStepChange?.("select-repos");
 			setAddingRepoIndex(null);
@@ -156,6 +170,8 @@ export function MultiRepoTab({
 						const isDone =
 							addingRepoIndex !== null ? i < addingRepoIndex : creationDone;
 						const isCurrent = addingRepoIndex === i;
+						const isLocal =
+							localCloneAvailability.data?.[repo.name] ?? false;
 
 						return (
 							<div
@@ -182,9 +198,23 @@ export function MultiRepoTab({
 								>
 									{repo.name}
 								</span>
-								{(isDone || creationDone) && branchName.trim() && (
-									<span className="text-xs text-muted-foreground ml-auto">
-										{branchName}
+								{(isCurrent || isDone || creationDone) && (
+									<span className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">
+										{branchName.trim() && <span>{branchName}</span>}
+										<Tooltip>
+											<TooltipTrigger asChild>
+												<span>
+													{isLocal ? (
+														<LuHardDrive className="size-3.5" />
+													) : (
+														<LuCloud className="size-3.5" />
+													)}
+												</span>
+											</TooltipTrigger>
+											<TooltipContent>
+												{isLocal ? "Local clone" : "Remote clone"}
+											</TooltipContent>
+										</Tooltip>
 									</span>
 								)}
 							</div>
