@@ -42,6 +42,22 @@ function startLocaleProbe(): void {
  */
 export const HOOK_PROTOCOL_VERSION = "2";
 
+/**
+ * Actual port the notification server bound to at runtime. Defaults to the
+ * configured port, but the startup bind may fall back to another port if the
+ * default is taken (stale socket from a prior run). Terminals must reflect the
+ * real port so agent hooks reach the live server.
+ *
+ * NOTE: This is a module-level mutable — NOT `process.env` — because Vite's
+ * `define` block statically inlines `process.env.DESKTOP_NOTIFICATIONS_PORT`
+ * at build time, so a runtime `process.env` read/write would be compiled away.
+ */
+let runtimeNotificationPort: number = env.DESKTOP_NOTIFICATIONS_PORT;
+
+export function setRuntimeNotificationPort(port: number): void {
+	runtimeNotificationPort = port;
+}
+
 export const FALLBACK_SHELL = os.platform() === "win32" ? "cmd.exe" : "/bin/sh";
 export const SHELL_CRASH_THRESHOLD_MS = 1000;
 
@@ -475,7 +491,9 @@ export function buildTerminalEnv(params: {
 		SUPERSET_WORKSPACE_NAME: workspaceName || "",
 		SUPERSET_WORKSPACE_PATH: workspacePath || "",
 		SUPERSET_ROOT_PATH: rootPath || "",
-		SUPERSET_PORT: String(env.DESKTOP_NOTIFICATIONS_PORT),
+		// Use the actual bound port so hooks reach the server even after a
+		// startup port-fallback (see runtimeNotificationPort).
+		SUPERSET_PORT: String(runtimeNotificationPort),
 		// Environment identifier for dev/prod separation
 		SUPERSET_ENV: env.NODE_ENV === "development" ? "development" : "production",
 		// Hook protocol version for forward compatibility

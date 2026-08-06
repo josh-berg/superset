@@ -28,6 +28,7 @@ import {
 	getNotificationTitle,
 	getWorkspaceName,
 } from "../lib/notifications/utils";
+import { setRuntimeNotificationPort } from "../lib/terminal/env";
 import {
 	getInitialWindowBounds,
 	loadWindowState,
@@ -144,15 +145,41 @@ export async function MainWindow() {
 		});
 	}
 
-	const server = notificationsApp.listen(
-		env.DESKTOP_NOTIFICATIONS_PORT,
-		"127.0.0.1",
-		() => {
-			console.log(
-				`[notifications] Listening on http://127.0.0.1:${env.DESKTOP_NOTIFICATIONS_PORT}`,
-			);
-		},
-	);
+	// Try the configured port; if it's taken (stale socket from a previous run),
+	// fall back to the next free port up to 10 attempts.
+	// `serverRef` is a mutable box so the window-close handler always closes the
+	// most-recently-bound server regardless of which port succeeded.
+	const serverRef: {
+		current: ReturnType<typeof notificationsApp.listen> | null;
+	} = { current: null };
+
+	const tryListenOnPort = (port: number): void => {
+		const srv = notificationsApp.listen(port, "127.0.0.1", () => {
+			const bound = (srv.address() as { port: number } | null)?.port ?? port;
+			// Record the real port so buildTerminalEnv stamps new terminals with it.
+			setRuntimeNotificationPort(bound);
+			console.log(`[notifications] Listening on http://127.0.0.1:${bound}`);
+		});
+		serverRef.current = srv;
+		srv.on("error", (err: NodeJS.ErrnoException) => {
+			if (
+				err.code === "EADDRINUSE" &&
+				port < env.DESKTOP_NOTIFICATIONS_PORT + 10
+			) {
+				console.warn(
+					`[notifications] Port ${port} in use (stale socket?), trying ${port + 1}…`,
+				);
+				tryListenOnPort(port + 1);
+			} else {
+				console.error(
+					`[notifications] Failed to start notification server on port ${port}:`,
+					err,
+				);
+			}
+		});
+	};
+
+	tryListenOnPort(env.DESKTOP_NOTIFICATIONS_PORT);
 
 	const notificationManager = new NotificationManager({
 		isSupported: () => Notification.isSupported(),
@@ -322,7 +349,7 @@ export async function MainWindow() {
 		}
 
 		browserManager.unregisterAll();
-		server.close();
+		serverRef.current?.close();
 		notificationManager.dispose();
 		notificationsEmitter.removeAllListeners();
 		getWorkspaceRuntimeRegistry().getDefault().terminal.detachAllListeners();
