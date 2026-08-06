@@ -46,7 +46,8 @@ import {
 } from "../workspaces/utils/git";
 import { getSimpleGitWithShellPath } from "../workspaces/utils/git-client";
 import { execWithShellEnv } from "../workspaces/utils/shell-env";
-import { getDefaultProjectColor } from "./utils/colors";
+import { getAutoProjectAbbreviation } from "./utils/abbreviations/abbreviations";
+import { getAutoProjectColor } from "./utils/colors";
 import { discoverAndSaveProjectIcon } from "./utils/favicon-discovery";
 import { fetchGitHubOwner, getGitHubAvatarUrl } from "./utils/github";
 import { ensureGitlessWorkspace } from "./utils/workspace-bootstrap";
@@ -141,6 +142,14 @@ async function initGitRepo(path: string): Promise<{ defaultBranch: string }> {
 	return { defaultBranch };
 }
 
+function getExistingProjectColors(): string[] {
+	return localDb
+		.select({ color: projects.color })
+		.from(projects)
+		.all()
+		.map((p) => p.color);
+}
+
 /** Insert or update a project record in the local database, returning the persisted row. */
 function upsertProject(mainRepoPath: string, defaultBranch: string): Project {
 	const name = basename(mainRepoPath);
@@ -160,12 +169,15 @@ function upsertProject(mainRepoPath: string, defaultBranch: string): Project {
 		return { ...existing, lastOpenedAt: Date.now(), defaultBranch };
 	}
 
+	const color = getAutoProjectColor(getExistingProjectColors());
+	const iconLetter = getAutoProjectAbbreviation(name);
 	const project = localDb
 		.insert(projects)
 		.values({
 			mainRepoPath,
 			name,
-			color: getDefaultProjectColor(),
+			color,
+			iconLetter,
 			defaultBranch,
 		})
 		.returning()
@@ -1274,7 +1286,8 @@ export const createProjectsRouter = (getWindow: () => BrowserWindow | null) => {
 					.values({
 						mainRepoPath: selectedPath,
 						name,
-						color: getDefaultProjectColor(),
+						color: getAutoProjectColor(getExistingProjectColors()),
+						iconLetter: getAutoProjectAbbreviation(name),
 						isGitless: true,
 					})
 					.returning()
@@ -1413,7 +1426,8 @@ export const createProjectsRouter = (getWindow: () => BrowserWindow | null) => {
 						.values({
 							mainRepoPath: clonePath,
 							name,
-							color: getDefaultProjectColor(),
+							color: getAutoProjectColor(getExistingProjectColors()),
+							iconLetter: getAutoProjectAbbreviation(name),
 							defaultBranch,
 						})
 						.returning()
@@ -1522,7 +1536,7 @@ export const createProjectsRouter = (getWindow: () => BrowserWindow | null) => {
 						workspaceBaseBranch: z.string().nullable().optional(),
 						worktreeBaseDir: z.string().nullable().optional(),
 						hideImage: z.boolean().optional(),
-						iconLetter: z.string().max(2).nullable().optional(),
+						iconLetter: z.string().max(3).nullable().optional(),
 						defaultApp: z.enum(EXTERNAL_APPS).nullable().optional(),
 					}),
 				}),

@@ -143,8 +143,7 @@ export function AddRepoDialog({
 						{selectedRepos.map((repo, i) => {
 							const isDone = addingRepoIndex !== null && i < addingRepoIndex;
 							const isCurrent = addingRepoIndex === i;
-							const isLocal =
-								localCloneAvailability.data?.[repo.name] ?? false;
+							const isLocal = localCloneAvailability.data?.[repo.name] ?? false;
 
 							return (
 								<div

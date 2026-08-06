@@ -615,14 +615,14 @@ export function ProjectSettings({
 						<div className="space-y-0.5">
 							<Label className="text-sm font-medium">Icon Letter</Label>
 							<p className="text-xs text-muted-foreground">
-								Override the letter shown in the sidebar icon (max 2
+								Override the abbreviation shown in the sidebar icon (max 3
 								characters).
 							</p>
 						</div>
 						<Input
 							value={iconLetterInput}
 							onChange={(e) => {
-								const val = e.target.value.slice(0, 2);
+								const val = e.target.value.slice(0, 3);
 								setIconLetterInput(val);
 							}}
 							onBlur={() => {
@@ -634,7 +634,7 @@ export function ProjectSettings({
 							}}
 							placeholder={project.name.charAt(0).toUpperCase()}
 							className="w-16 text-center uppercase"
-							maxLength={2}
+							maxLength={3}
 						/>
 					</div>
 

@@ -76,7 +76,7 @@ function sanitizeProjectFolderName(name: string): string {
 	const clean = name
 		.trim()
 		.replace(/[\s]+/g, "-")
-		.replace(/[^a-zA-Z0-9._\-]/g, "")
+		.replace(/[^a-zA-Z0-9._-]/g, "")
 		.replace(/-+/g, "-")
 		.replace(/^[-_.]+|[-_.]+$/g, "");
 	return clean || "project";
@@ -423,8 +423,7 @@ export const createFeatureProjectsRouter = () => {
 					? join(projectsRootDir, "repos", repoName)
 					: null;
 				const useLocalClone =
-					localRepoPath !== null &&
-					existsSync(join(localRepoPath, ".git"));
+					localRepoPath !== null && existsSync(join(localRepoPath, ".git"));
 
 				try {
 					if (useLocalClone && localRepoPath) {

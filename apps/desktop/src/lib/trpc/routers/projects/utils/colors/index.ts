@@ -1,1 +1,1 @@
-export { getDefaultProjectColor } from "./colors";
+export { getAutoProjectColor, getDefaultProjectColor } from "./colors";

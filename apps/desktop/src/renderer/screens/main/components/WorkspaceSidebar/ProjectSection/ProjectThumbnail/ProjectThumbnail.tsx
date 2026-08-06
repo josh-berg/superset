@@ -77,7 +77,7 @@ export function ProjectThumbnail({
 
 	const owner = avatarData?.owner ?? githubOwner;
 	const displayLetter = iconLetter?.trim()
-		? iconLetter.trim().toUpperCase().slice(0, 2)
+		? iconLetter.trim().toUpperCase().slice(0, 3)
 		: projectName.charAt(0).toUpperCase();
 	const hasCustomColor = isCustomColor(projectColor);
 	const shouldUseTransparentIconFrame = projectColor === PROJECT_COLOR_DEFAULT;

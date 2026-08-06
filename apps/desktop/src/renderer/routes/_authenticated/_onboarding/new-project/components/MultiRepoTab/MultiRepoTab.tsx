@@ -3,7 +3,13 @@ import { Input } from "@superset/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@superset/ui/tooltip";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { LuCheck, LuCloud, LuHardDrive, LuLoader, LuPlus } from "react-icons/lu";
+import {
+	LuCheck,
+	LuCloud,
+	LuHardDrive,
+	LuLoader,
+	LuPlus,
+} from "react-icons/lu";
 import type { RepoSelection } from "renderer/components/RepoPicker";
 import { RepoPicker } from "renderer/components/RepoPicker";
 import { electronTrpc } from "renderer/lib/electron-trpc";
@@ -170,8 +176,7 @@ export function MultiRepoTab({
 						const isDone =
 							addingRepoIndex !== null ? i < addingRepoIndex : creationDone;
 						const isCurrent = addingRepoIndex === i;
-						const isLocal =
-							localCloneAvailability.data?.[repo.name] ?? false;
+						const isLocal = localCloneAvailability.data?.[repo.name] ?? false;
 
 						return (
 							<div

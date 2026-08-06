@@ -15,6 +15,7 @@ import { useNavigate, useParams } from "@tanstack/react-router";
 import { useState } from "react";
 import { HiChevronRight, HiMiniPlus } from "react-icons/hi2";
 import {
+	LuCaseSensitive,
 	LuFolderOpen,
 	LuImage,
 	LuImageOff,
@@ -34,6 +35,7 @@ import { RenameInput } from "../RenameInput";
 import { RunningTabCounts } from "../RunningTabCounts";
 import { CloseProjectDialog } from "./CloseProjectDialog";
 import { ProjectThumbnail } from "./ProjectThumbnail";
+import { SetAbbreviationDialog } from "./SetAbbreviationDialog";
 
 interface ProjectHeaderProps {
 	projectId: string;
@@ -100,6 +102,8 @@ export function ProjectHeader({
 	const navigate = useNavigate();
 	const params = useParams({ strict: false }) as { workspaceId?: string };
 	const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false);
+	const [isAbbreviationDialogOpen, setIsAbbreviationDialogOpen] =
+		useState(false);
 	const rename = useProjectRename(projectId, projectName);
 
 	const closeProject = electronTrpc.projects.close.useMutation({
@@ -184,6 +188,13 @@ export function ProjectHeader({
 		updateProject.mutate({ id: projectId, patch: { hideImage: !hideImage } });
 	};
 
+	const handleSetAbbreviation = (abbreviation: string | null) => {
+		updateProject.mutate({
+			id: projectId,
+			patch: { iconLetter: abbreviation },
+		});
+	};
+
 	const createSection = electronTrpc.workspaces.createSection.useMutation({
 		onSuccess: () => utils.workspaces.getAllGrouped.invalidate(),
 		onError: (error) =>
@@ -208,6 +219,13 @@ export function ProjectHeader({
 				/>
 			</ContextMenuSubContent>
 		</ContextMenuSub>
+	);
+
+	const abbreviationMenuItem = (
+		<ContextMenuItem onSelect={() => setIsAbbreviationDialogOpen(true)}>
+			<LuCaseSensitive className="size-4 mr-2" strokeWidth={STROKE_WIDTH} />
+			Set Abbreviation
+		</ContextMenuItem>
 	);
 
 	if (isSidebarCollapsed) {
@@ -273,6 +291,7 @@ export function ProjectHeader({
 							Project Settings
 						</ContextMenuItem>
 						{colorPickerSubmenu}
+						{abbreviationMenuItem}
 						<ContextMenuItem onSelect={handleNewSection}>
 							<LuListPlus className="size-4 mr-2" strokeWidth={STROKE_WIDTH} />
 							New Section
@@ -302,6 +321,12 @@ export function ProjectHeader({
 					open={isCloseDialogOpen}
 					onOpenChange={setIsCloseDialogOpen}
 					onConfirm={handleConfirmClose}
+				/>
+				<SetAbbreviationDialog
+					open={isAbbreviationDialogOpen}
+					onOpenChange={setIsAbbreviationDialogOpen}
+					currentAbbreviation={iconLetter}
+					onSetAbbreviation={handleSetAbbreviation}
 				/>
 			</>
 		);
@@ -430,6 +455,7 @@ export function ProjectHeader({
 						Project Settings
 					</ContextMenuItem>
 					{colorPickerSubmenu}
+					{abbreviationMenuItem}
 					<ContextMenuItem onSelect={handleToggleImage}>
 						{hideImage ? (
 							<LuImage className="size-4 mr-2" strokeWidth={STROKE_WIDTH} />
@@ -467,6 +493,12 @@ export function ProjectHeader({
 				open={isCloseDialogOpen}
 				onOpenChange={setIsCloseDialogOpen}
 				onConfirm={handleConfirmClose}
+			/>
+			<SetAbbreviationDialog
+				open={isAbbreviationDialogOpen}
+				onOpenChange={setIsAbbreviationDialogOpen}
+				currentAbbreviation={iconLetter}
+				onSetAbbreviation={handleSetAbbreviation}
 			/>
 		</>
 	);
