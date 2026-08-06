@@ -5,6 +5,7 @@ import { ClaudeCosts } from "./components/ClaudeCosts";
 import { NavigationControls } from "./components/NavigationControls";
 import { OpenInMenuButton } from "./components/OpenInMenuButton";
 import { ResourceConsumption } from "./components/ResourceConsumption";
+import { SessionsPanel } from "./components/SessionsPanel";
 import { SidebarToggle } from "./components/SidebarToggle";
 import { WindowControls } from "./components/WindowControls";
 
@@ -28,6 +29,7 @@ export function TopBar() {
 			>
 				<SidebarToggle />
 				<NavigationControls />
+				<SessionsPanel />
 				<ResourceConsumption />
 				<ClaudeCosts />
 			</div>

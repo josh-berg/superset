@@ -348,7 +348,11 @@ export function ProjectSection({
 												id={item.workspace.id}
 												projectId={item.workspace.projectId}
 												worktreePath={item.workspace.worktreePath}
-												name={isFeatureProject && item.workspace.type === "branch" ? `${projectName} (root)` : item.workspace.name}
+												name={
+													isFeatureProject && item.workspace.type === "branch"
+														? `${projectName} (root)`
+														: item.workspace.name
+												}
 												branch={item.workspace.branch}
 												type={item.workspace.type}
 												isUnread={item.workspace.isUnread}
@@ -500,7 +504,11 @@ export function ProjectSection({
 											id={item.workspace.id}
 											projectId={item.workspace.projectId}
 											worktreePath={item.workspace.worktreePath}
-											name={isFeatureProject && item.workspace.type === "branch" ? `${projectName} (root)` : item.workspace.name}
+											name={
+												isFeatureProject && item.workspace.type === "branch"
+													? `${projectName} (root)`
+													: item.workspace.name
+											}
 											branch={item.workspace.branch}
 											type={item.workspace.type}
 											isUnread={item.workspace.isUnread}
