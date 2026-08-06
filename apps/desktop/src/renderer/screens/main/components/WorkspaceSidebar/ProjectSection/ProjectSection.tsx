@@ -116,17 +116,22 @@ export function ProjectSection({
 		[workspaces, sections],
 	);
 
+	const sortedChildProjects = useMemo(
+		() => [...childProjects].sort((a, b) => a.name.localeCompare(b.name)),
+		[childProjects],
+	);
+
 	// Workspace ids to monitor for the aggregate "needs pull" badge. Feature
 	// projects track their child repos; single-repo projects track their own
 	// workspaces.
 	const gitWorkspaceIds = useMemo(
 		() =>
 			isFeatureProject
-				? childProjects
+				? sortedChildProjects
 						.map((c) => c.workspaceId)
 						.filter((id): id is string => !!id)
 				: allWorkspaceIds,
-		[isFeatureProject, childProjects, allWorkspaceIds],
+		[isFeatureProject, sortedChildProjects, allWorkspaceIds],
 	);
 
 	const { orderedWorkspaceIds, topLevelChildren } = useMemo(() => {
@@ -343,7 +348,7 @@ export function ProjectSection({
 												id={item.workspace.id}
 												projectId={item.workspace.projectId}
 												worktreePath={item.workspace.worktreePath}
-												name={item.workspace.name}
+												name={isFeatureProject && item.workspace.type === "branch" ? `${projectName} (root)` : item.workspace.name}
 												branch={item.workspace.branch}
 												type={item.workspace.type}
 												isUnread={item.workspace.isUnread}
@@ -387,7 +392,7 @@ export function ProjectSection({
 									)}
 									{isFeatureProject && (
 										<div className="flex flex-col items-center gap-0.5 pt-1">
-											{childProjects.map((child) => (
+											{sortedChildProjects.map((child) => (
 												<ChildRepoItem
 													key={child.id}
 													workspaceId={child.workspaceId}
@@ -495,7 +500,7 @@ export function ProjectSection({
 											id={item.workspace.id}
 											projectId={item.workspace.projectId}
 											worktreePath={item.workspace.worktreePath}
-											name={item.workspace.name}
+											name={isFeatureProject && item.workspace.type === "branch" ? `${projectName} (root)` : item.workspace.name}
 											branch={item.workspace.branch}
 											type={item.workspace.type}
 											isUnread={item.workspace.isUnread}
@@ -536,8 +541,8 @@ export function ProjectSection({
 									/>
 								)}
 								{isFeatureProject && (
-									<div className="flex flex-col gap-0.5 pt-1">
-										{childProjects.map((child) => (
+									<div className="flex flex-col gap-0.5 pt-1 ml-3 border-l border-border/40 pl-1">
+										{sortedChildProjects.map((child) => (
 											<ChildRepoItem
 												key={child.id}
 												workspaceId={child.workspaceId}

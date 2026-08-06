@@ -410,7 +410,7 @@ export function WorkspaceListItem({
 							>
 								{isBranchWorkspace
 									? isGitless && isFeatureProject
-										? "project"
+										? name
 										: "local"
 									: (worktreePath.split("/").filter(Boolean).pop() ??
 										name ??

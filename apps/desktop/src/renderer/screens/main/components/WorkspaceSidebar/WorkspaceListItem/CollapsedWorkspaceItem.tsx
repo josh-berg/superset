@@ -101,7 +101,7 @@ export function CollapsedWorkspaceItem({
 					<TooltipTrigger asChild>{collapsedButton}</TooltipTrigger>
 					<TooltipContent side="right" className="flex flex-col gap-0.5">
 						{isGitless && isFeatureProject ? (
-							<span className="font-medium">project</span>
+							<span className="font-medium">{name}</span>
 						) : isGitless ? (
 							<span className="font-medium">folder</span>
 						) : (

@@ -3,7 +3,13 @@ import { useMatchRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { LuGitBranch } from "react-icons/lu";
 import { electronTrpc } from "renderer/lib/electron-trpc";
+import { AsciiSpinner } from "renderer/screens/main/components/AsciiSpinner";
+import { StatusIndicator } from "renderer/screens/main/components/StatusIndicator";
 import { navigateToWorkspace } from "renderer/routes/_authenticated/_dashboard/utils/workspace-navigation";
+import { useTabsStore } from "renderer/stores/tabs/store";
+import { extractPaneIdsFromLayout } from "renderer/stores/tabs/utils";
+import { getHighestPriorityStatus } from "shared/tabs-types";
+import { RunningTabCounts } from "../RunningTabCounts";
 import { SwitchBranchDialog } from "../WorkspaceListItem/components/SwitchBranchDialog";
 import { GITHUB_STATUS_STALE_TIME } from "../WorkspaceListItem/constants";
 import { WorkspaceAheadBehind } from "../WorkspaceListItem/WorkspaceAheadBehind";
@@ -33,6 +39,19 @@ export function ChildRepoItem({
 	);
 	const isBehind = (aheadBehind?.behind ?? 0) > 0;
 
+	const workspaceStatus = useTabsStore((state) => {
+		if (!workspaceId) return null;
+		function* paneStatuses() {
+			for (const tab of state.tabs) {
+				if (tab.workspaceId !== workspaceId) continue;
+				for (const paneId of extractPaneIdsFromLayout(tab.layout)) {
+					yield state.panes[paneId]?.status;
+				}
+			}
+		}
+		return getHighestPriorityStatus(paneStatuses());
+	});
+
 	const isActive =
 		!!workspaceId &&
 		!!matchRoute({
@@ -61,8 +80,17 @@ export function ChildRepoItem({
 					!workspaceId && "opacity-40 cursor-default",
 				)}
 			>
-				<LuGitBranch className="size-3.5" />
-				{isBehind && (
+				{workspaceStatus === "working" ? (
+					<AsciiSpinner className="text-base" />
+				) : (
+					<LuGitBranch className="size-3.5" />
+				)}
+				{workspaceStatus && workspaceStatus !== "working" && (
+					<span className="absolute top-1 right-1">
+						<StatusIndicator status={workspaceStatus} />
+					</span>
+				)}
+				{!workspaceStatus && isBehind && (
 					<span className="absolute top-1 right-1 size-1.5 rounded-full bg-amber-400" />
 				)}
 			</button>
@@ -83,8 +111,20 @@ export function ChildRepoItem({
 					!workspaceId && "opacity-40 cursor-default",
 				)}
 			>
-				<LuGitBranch className="size-3.5 shrink-0 opacity-60" />
+				<span className="relative shrink-0 flex items-center justify-center size-4">
+					{workspaceStatus === "working" ? (
+						<AsciiSpinner className="text-base" />
+					) : (
+						<LuGitBranch className="size-3.5 opacity-60" />
+					)}
+					{workspaceStatus && workspaceStatus !== "working" && (
+						<span className="absolute -top-0.5 -right-0.5">
+							<StatusIndicator status={workspaceStatus} />
+						</span>
+					)}
+				</span>
 				<span className="flex-1 text-xs font-medium truncate">{name}</span>
+				{workspaceId && <RunningTabCounts workspaceIds={[workspaceId]} />}
 				{aheadBehind && (
 					<WorkspaceAheadBehind
 						ahead={aheadBehind.ahead}
