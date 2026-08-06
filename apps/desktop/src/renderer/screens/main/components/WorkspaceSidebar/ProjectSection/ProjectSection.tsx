@@ -97,13 +97,14 @@ export function ProjectSection({
 	const reorderProjects = useReorderProjects();
 	const utils = electronTrpc.useUtils();
 	const [isAddRepoDialogOpen, setIsAddRepoDialogOpen] = useState(false);
+	const [isDeleting, setIsDeleting] = useState(false);
 
 	const projectDndType =
 		PROJECT_DND_TYPES[
 			isFeatureProject ? "feature" : isGitless ? "gitless" : "normal"
 		];
 
-	const isCollapsed = isProjectCollapsed(projectId);
+	const isCollapsed = isProjectCollapsed(projectId) || isDeleting;
 	const totalWorkspaceCount =
 		workspaces.length +
 		sections.reduce((sum, s) => sum + s.workspaces.length, 0);
@@ -310,6 +311,7 @@ export function ProjectSection({
 							workspaceIds={allWorkspaceIds}
 							gitWorkspaceIds={gitWorkspaceIds}
 							onNewWorkspace={handleNewWorkspace}
+							onDeletingChange={setIsDeleting}
 						/>
 					</div>
 					<AnimatePresence initial={false}>
@@ -448,6 +450,7 @@ export function ProjectSection({
 						workspaceIds={allWorkspaceIds}
 						gitWorkspaceIds={gitWorkspaceIds}
 						onNewWorkspace={handleNewWorkspace}
+						onDeletingChange={setIsDeleting}
 					/>
 				</div>
 

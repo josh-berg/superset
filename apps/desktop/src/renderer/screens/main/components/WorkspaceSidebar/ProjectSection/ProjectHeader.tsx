@@ -12,7 +12,7 @@ import { toast } from "@superset/ui/sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@superset/ui/tooltip";
 import { cn } from "@superset/ui/utils";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { HiChevronRight, HiMiniPlus } from "react-icons/hi2";
 import {
 	LuCaseSensitive,
@@ -20,6 +20,7 @@ import {
 	LuImage,
 	LuImageOff,
 	LuListPlus,
+	LuLoader,
 	LuPalette,
 	LuPencil,
 	LuSettings,
@@ -63,6 +64,7 @@ interface ProjectHeaderProps {
 	 */
 	gitWorkspaceIds: string[];
 	onNewWorkspace: () => void;
+	onDeletingChange?: (isDeleting: boolean) => void;
 }
 
 export function ProjectHeader({
@@ -83,6 +85,7 @@ export function ProjectHeader({
 	workspaceIds,
 	gitWorkspaceIds,
 	onNewWorkspace,
+	onDeletingChange,
 }: ProjectHeaderProps) {
 	const utils = electronTrpc.useUtils();
 
@@ -151,6 +154,10 @@ export function ProjectHeader({
 			toast.error(`Failed to close project: ${error.message}`);
 		},
 	});
+
+	useEffect(() => {
+		onDeletingChange?.(closeProject.isPending);
+	}, [closeProject.isPending, onDeletingChange]);
 
 	const openInFinder = electronTrpc.external.openInFinder.useMutation({
 		onError: (error) => toast.error(`Failed to open: ${error.message}`),
@@ -229,6 +236,14 @@ export function ProjectHeader({
 	);
 
 	if (isSidebarCollapsed) {
+		if (closeProject.isPending) {
+			return (
+				<div className="relative flex items-center justify-center size-8 rounded-md opacity-50">
+					<LuLoader className="size-4 text-muted-foreground animate-spin" />
+				</div>
+			);
+		}
+
 		return (
 			<>
 				<ContextMenu>
@@ -329,6 +344,27 @@ export function ProjectHeader({
 					onSetAbbreviation={handleSetAbbreviation}
 				/>
 			</>
+		);
+	}
+
+	if (closeProject.isPending) {
+		return (
+			<div className="flex items-center w-full pl-3 pr-2 py-1.5 text-sm font-medium opacity-50 pointer-events-none">
+				<div className="flex items-center gap-2 flex-1 min-w-0 py-0.5">
+					<ProjectThumbnail
+						projectId={projectId}
+						projectName={projectName}
+						projectColor={projectColor}
+						githubOwner={githubOwner}
+						hideImage={hideImage}
+						iconUrl={iconUrl}
+						iconLetter={iconLetter}
+						isFeatureProject={isFeatureProject}
+					/>
+					<span className="truncate text-muted-foreground">Removing...</span>
+				</div>
+				<LuLoader className="size-3.5 text-muted-foreground animate-spin shrink-0 ml-1" />
+			</div>
 		);
 	}
 
