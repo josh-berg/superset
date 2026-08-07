@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { MosaicBranch } from "react-mosaic-component";
+import { TbRefresh } from "react-icons/tb";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@superset/ui/tooltip";
 import { StatusIndicator } from "renderer/screens/main/components/StatusIndicator";
 import { WorkspaceRunIndicator } from "renderer/screens/main/components/WorkspaceRunIndicator";
 import {
@@ -73,6 +75,9 @@ export function TabPane({
 		(s) => s.getGetSelectionCallback,
 	);
 	const getPasteCallback = useTerminalCallbacksStore((s) => s.getPasteCallback);
+	const getRefreshCallback = useTerminalCallbacksStore(
+		(s) => s.getRefreshCallback,
+	);
 
 	useEffect(() => {
 		const container = terminalContainerRef.current;
@@ -90,6 +95,10 @@ export function TabPane({
 
 	const handleScrollToBottom = () => {
 		getScrollToBottomCallback(paneId)?.();
+	};
+
+	const handleRefreshTerminal = () => {
+		getRefreshCallback(paneId)?.();
 	};
 
 	return (
@@ -123,6 +132,22 @@ export function TabPane({
 						onSplitPane={handlers.onSplitPane}
 						onClosePane={handlers.onClosePane}
 						closeHotkeyId="CLOSE_TERMINAL"
+						leadingActions={
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<button
+										type="button"
+										onClick={handleRefreshTerminal}
+										className="rounded p-0.5 text-muted-foreground/60 transition-colors hover:text-muted-foreground"
+									>
+										<TbRefresh className="size-3.5" />
+									</button>
+								</TooltipTrigger>
+								<TooltipContent side="bottom" showArrow={false}>
+									Refresh terminal display
+								</TooltipContent>
+							</Tooltip>
+						}
 					/>
 				</div>
 			)}

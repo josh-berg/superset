@@ -178,6 +178,8 @@ export const Terminal = ({ paneId, tabId, workspaceId }: TerminalProps) => {
 		unregisterGetSelectionCallbackRef,
 		registerPasteCallbackRef,
 		unregisterPasteCallbackRef,
+		registerRefreshCallbackRef,
+		unregisterRefreshCallbackRef,
 	} = useTerminalRefs({
 		paneId,
 		tabId,
@@ -369,6 +371,8 @@ export const Terminal = ({ paneId, tabId, workspaceId }: TerminalProps) => {
 		unregisterGetSelectionCallbackRef,
 		registerPasteCallbackRef,
 		unregisterPasteCallbackRef,
+		registerRefreshCallbackRef,
+		unregisterRefreshCallbackRef,
 		defaultRestartCommandRef,
 	});
 

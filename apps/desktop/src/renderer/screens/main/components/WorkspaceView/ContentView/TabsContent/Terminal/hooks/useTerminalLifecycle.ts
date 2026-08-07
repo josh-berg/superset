@@ -151,6 +151,8 @@ export interface UseTerminalLifecycleOptions {
 		(paneId: string, callback: (text: string) => void) => void
 	>;
 	unregisterPasteCallbackRef: MutableRefObject<UnregisterCallback>;
+	registerRefreshCallbackRef: MutableRefObject<RegisterCallback>;
+	unregisterRefreshCallbackRef: MutableRefObject<UnregisterCallback>;
 	defaultRestartCommandRef: MutableRefObject<string | undefined>;
 }
 
@@ -212,6 +214,8 @@ export function useTerminalLifecycle({
 	unregisterGetSelectionCallbackRef,
 	registerPasteCallbackRef,
 	unregisterPasteCallbackRef,
+	registerRefreshCallbackRef,
+	unregisterRefreshCallbackRef,
 	defaultRestartCommandRef,
 }: UseTerminalLifecycleOptions): UseTerminalLifecycleReturn {
 	const [xtermInstance, setXtermInstance] = useState<XTerm | null>(null);
@@ -847,6 +851,8 @@ export function useTerminalLifecycle({
 			reattachRecovery.pendingFrame = null;
 		};
 
+		registerRefreshCallbackRef.current(paneId, () => runReattachRecovery(true));
+
 		// Switching workspaces/tabs unmounts and remounts the terminal (only the
 		// active tab is rendered), so on return xterm is re-created from scratch
 		// while the mosaic container is still transitioning to its final size.
@@ -1051,6 +1057,7 @@ export function useTerminalLifecycle({
 			unregisterScrollToBottomCallbackRef.current(paneId);
 			unregisterGetSelectionCallbackRef.current(paneId);
 			unregisterPasteCallbackRef.current(paneId);
+			unregisterRefreshCallbackRef.current(paneId);
 
 			if (paneDestroyed) {
 				// Pane was explicitly destroyed, so kill the session.

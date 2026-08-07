@@ -47,6 +47,8 @@ export interface UseTerminalRefsReturn {
 	unregisterGetSelectionCallbackRef: MutableRefObject<UnregisterCallback>;
 	registerPasteCallbackRef: MutableRefObject<RegisterPasteCallback>;
 	unregisterPasteCallbackRef: MutableRefObject<UnregisterCallback>;
+	registerRefreshCallbackRef: MutableRefObject<RegisterCallback>;
+	unregisterRefreshCallbackRef: MutableRefObject<UnregisterCallback>;
 }
 
 export function useTerminalRefs({
@@ -109,6 +111,12 @@ export function useTerminalRefs({
 	const unregisterPasteCallbackRef = useRef(
 		useTerminalCallbacksStore.getState().unregisterPasteCallback,
 	);
+	const registerRefreshCallbackRef = useRef(
+		useTerminalCallbacksStore.getState().registerRefreshCallback,
+	);
+	const unregisterRefreshCallbackRef = useRef(
+		useTerminalCallbacksStore.getState().unregisterRefreshCallback,
+	);
 
 	return {
 		isFocused,
@@ -128,5 +136,7 @@ export function useTerminalRefs({
 		unregisterGetSelectionCallbackRef,
 		registerPasteCallbackRef,
 		unregisterPasteCallbackRef,
+		registerRefreshCallbackRef,
+		unregisterRefreshCallbackRef,
 	};
 }
