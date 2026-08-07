@@ -57,8 +57,7 @@ function createDeps(
 			currentWorkspaceId: null,
 			tabsState: undefined,
 		}),
-		getWorkspaceName: () => "Test Workspace",
-		getNotificationTitle: () => "Test Title",
+		getWorkspaceContext: () => ({ title: "my-app", context: "feat/test" }),
 		...overrides,
 	};
 }
@@ -283,7 +282,7 @@ describe("NotificationManager", () => {
 	});
 
 	describe("notification content", () => {
-		it("uses permission request title/body for PermissionRequest events", () => {
+		it("shows repo name as title and branch with attention text for PermissionRequest", () => {
 			const createNotification = mock(
 				(_opts: { title: string; body: string; silent: boolean }) =>
 					createMockNotification(),
@@ -297,13 +296,13 @@ describe("NotificationManager", () => {
 
 			expect(createNotification).toHaveBeenCalledWith(
 				expect.objectContaining({
-					title: "Input Needed — Test Workspace",
-					body: '"Test Title" needs your attention',
+					title: "my-app",
+					body: "feat/test needs your attention",
 				}),
 			);
 		});
 
-		it("uses completion title/body for Stop events", () => {
+		it("shows repo name as title and branch with finished text for Stop events", () => {
 			const createNotification = mock(
 				(_opts: { title: string; body: string; silent: boolean }) =>
 					createMockNotification(),
@@ -315,8 +314,29 @@ describe("NotificationManager", () => {
 
 			expect(createNotification).toHaveBeenCalledWith(
 				expect.objectContaining({
-					title: "Agent Complete — Test Workspace",
-					body: '"Test Title" has finished its task',
+					title: "my-app",
+					body: "feat/test has finished",
+				}),
+			);
+		});
+
+		it("shows status text alone when context is null (folder workspace)", () => {
+			const createNotification = mock(
+				(_opts: { title: string; body: string; silent: boolean }) =>
+					createMockNotification(),
+			);
+			const localDeps = createDeps({
+				createNotification,
+				getWorkspaceContext: () => ({ title: "my-folder", context: null }),
+			});
+			const localManager = new NotificationManager(localDeps);
+
+			localManager.handleAgentLifecycle(makeEvent({ eventType: "Stop" }));
+
+			expect(createNotification).toHaveBeenCalledWith(
+				expect.objectContaining({
+					title: "my-folder",
+					body: "has finished",
 				}),
 			);
 		});

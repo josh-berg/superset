@@ -2,6 +2,7 @@ import type {
 	AgentLifecycleEvent,
 	NotificationIds,
 } from "shared/notification-types";
+import type { WorkspaceContext } from "./utils";
 import { isPaneVisible } from "./utils";
 
 const NOTIFICATION_TTL_MS = 10 * 60 * 1000;
@@ -33,8 +34,7 @@ export interface NotificationManagerDeps {
 			  }
 			| undefined;
 	};
-	getWorkspaceName: (workspaceId: string | undefined) => string;
-	getNotificationTitle: (event: AgentLifecycleEvent) => string;
+	getWorkspaceContext: (workspaceId: string | undefined) => WorkspaceContext;
 }
 
 interface TrackedEntry {
@@ -60,17 +60,21 @@ export class NotificationManager {
 
 		if (this.shouldSuppressForVisiblePane(event)) return;
 
-		const workspaceName = this.deps.getWorkspaceName(event.workspaceId);
-		const title = this.deps.getNotificationTitle(event);
+		const { title: workspaceTitle, context } = this.deps.getWorkspaceContext(
+			event.workspaceId,
+		);
 
 		const isPermissionRequest = event.eventType === "PermissionRequest";
+		const statusText = isPermissionRequest
+			? "needs your attention"
+			: "has finished";
+		const body = context
+			? `${context} ${statusText}`
+			: statusText;
+
 		const notification = this.deps.createNotification({
-			title: isPermissionRequest
-				? `Input Needed — ${workspaceName}`
-				: `Agent Complete — ${workspaceName}`,
-			body: isPermissionRequest
-				? `"${title}" needs your attention`
-				: `"${title}" has finished its task`,
+			title: workspaceTitle,
+			body,
 			silent: true,
 		});
 

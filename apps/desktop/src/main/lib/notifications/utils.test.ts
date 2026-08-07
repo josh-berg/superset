@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import {
 	extractWorkspaceIdFromUrl,
 	getNotificationTitle,
+	getWorkspaceContext,
 	getWorkspaceName,
 	isPaneVisible,
 } from "./utils";
@@ -202,7 +203,7 @@ describe("getWorkspaceName", () => {
 	it("returns workspace.name when available", () => {
 		expect(
 			getWorkspaceName({
-				workspace: { name: "My Workspace", worktreeId: null },
+				workspace: { name: "My Workspace", worktreeId: null, branch: null },
 			}),
 		).toBe("My Workspace");
 	});
@@ -210,7 +211,7 @@ describe("getWorkspaceName", () => {
 	it("returns worktree.branch when no workspace name", () => {
 		expect(
 			getWorkspaceName({
-				workspace: { name: null, worktreeId: "wt1" },
+				workspace: { name: null, worktreeId: "wt1", branch: null },
 				worktree: { branch: "feature/test" },
 			}),
 		).toBe("feature/test");
@@ -223,9 +224,92 @@ describe("getWorkspaceName", () => {
 	it("returns Workspace when all values are null", () => {
 		expect(
 			getWorkspaceName({
-				workspace: { name: null, worktreeId: null },
+				workspace: { name: null, worktreeId: null, branch: null },
 				worktree: { branch: null },
 			}),
 		).toBe("Workspace");
+	});
+});
+
+describe("getWorkspaceContext", () => {
+	const repoProject = {
+		name: "my-app",
+		isGitless: false,
+		isFeatureProject: false,
+		parentProjectId: null,
+	};
+	const folderProject = {
+		name: "my-folder",
+		isGitless: true,
+		isFeatureProject: false,
+		parentProjectId: null,
+	};
+	const featureProject = {
+		name: "my-feature",
+		isGitless: true,
+		isFeatureProject: true,
+		parentProjectId: null,
+	};
+	const childRepoProject = {
+		name: "api-service",
+		isGitless: false,
+		isFeatureProject: false,
+		parentProjectId: "parent-1",
+	};
+
+	it("repo worktree: title=repo name, context=worktree branch", () => {
+		expect(
+			getWorkspaceContext({
+				workspace: { name: "Add login", worktreeId: "wt1", branch: null },
+				worktree: { branch: "feat/add-login" },
+				project: repoProject,
+			}),
+		).toEqual({ title: "my-app", context: "feat/add-login" });
+	});
+
+	it("repo branch: title=repo name, context=workspace branch", () => {
+		expect(
+			getWorkspaceContext({
+				workspace: { name: "main", worktreeId: null, branch: "main" },
+				project: repoProject,
+			}),
+		).toEqual({ title: "my-app", context: "main" });
+	});
+
+	it("folder workspace: title=folder name, context=null", () => {
+		expect(
+			getWorkspaceContext({
+				workspace: { name: "default", worktreeId: null, branch: "" },
+				project: folderProject,
+			}),
+		).toEqual({ title: "my-folder", context: null });
+	});
+
+	it("feature project root workspace: title=project name, context='root'", () => {
+		expect(
+			getWorkspaceContext({
+				workspace: { name: "default", worktreeId: null, branch: "" },
+				project: featureProject,
+			}),
+		).toEqual({ title: "my-feature", context: "root" });
+	});
+
+	it("feature project child repo workspace: title=parent project name, context=repo name", () => {
+		expect(
+			getWorkspaceContext({
+				workspace: { name: "default", worktreeId: null, branch: "" },
+				project: childRepoProject,
+				parentProject: { name: "my-feature" },
+			}),
+		).toEqual({ title: "my-feature", context: "api-service" });
+	});
+
+	it("falls back to 'Workspace' title when project name is null", () => {
+		expect(
+			getWorkspaceContext({
+				workspace: { name: null, worktreeId: null, branch: null },
+				project: { ...repoProject, name: null },
+			}),
+		).toEqual({ title: "Workspace", context: null });
 	});
 });

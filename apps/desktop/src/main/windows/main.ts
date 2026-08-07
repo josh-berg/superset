@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { workspaces, worktrees } from "@superset/local-db";
+import { projects, workspaces, worktrees } from "@superset/local-db";
 import { eq } from "drizzle-orm";
 import type { BrowserWindow } from "electron";
 import { app, Notification, nativeTheme } from "electron";
@@ -25,8 +25,7 @@ import {
 } from "../lib/notifications/server";
 import {
 	extractWorkspaceIdFromUrl,
-	getNotificationTitle,
-	getWorkspaceName,
+	getWorkspaceContext,
 } from "../lib/notifications/utils";
 import { setRuntimeNotificationPort } from "../lib/terminal/env";
 import {
@@ -39,8 +38,10 @@ import { getWorkspaceRuntimeRegistry } from "../lib/workspace-runtime";
 // Singleton IPC handler to prevent duplicate handlers on window reopen (macOS)
 let ipcHandler: ReturnType<typeof createIPCHandler> | null = null;
 
-function getWorkspaceNameFromDb(workspaceId: string | undefined): string {
-	if (!workspaceId) return "Workspace";
+function getWorkspaceContextFromDb(
+	workspaceId: string | undefined,
+): ReturnType<typeof getWorkspaceContext> {
+	if (!workspaceId) return { title: "Workspace", context: null };
 	try {
 		const workspace = localDb
 			.select()
@@ -54,10 +55,24 @@ function getWorkspaceNameFromDb(workspaceId: string | undefined): string {
 					.where(eq(worktrees.id, workspace.worktreeId))
 					.get()
 			: undefined;
-		return getWorkspaceName({ workspace, worktree });
+		const project = workspace?.projectId
+			? localDb
+					.select()
+					.from(projects)
+					.where(eq(projects.id, workspace.projectId))
+					.get()
+			: undefined;
+		const parentProject = project?.parentProjectId
+			? localDb
+					.select()
+					.from(projects)
+					.where(eq(projects.id, project.parentProjectId))
+					.get()
+			: undefined;
+		return getWorkspaceContext({ workspace, worktree, project, parentProject });
 	} catch (error) {
-		console.error("[notifications] Failed to get workspace name:", error);
-		return "Workspace";
+		console.error("[notifications] Failed to get workspace context:", error);
+		return { title: "Workspace", context: null };
 	}
 }
 
@@ -197,14 +212,7 @@ export async function MainWindow() {
 			),
 			tabsState: appState.data?.tabsState,
 		}),
-		getWorkspaceName: getWorkspaceNameFromDb,
-		getNotificationTitle: (event) =>
-			getNotificationTitle({
-				tabId: event.tabId,
-				paneId: event.paneId,
-				tabs: appState.data?.tabsState?.tabs,
-				panes: appState.data?.tabsState?.panes,
-			}),
+		getWorkspaceContext: getWorkspaceContextFromDb,
 	});
 	notificationManager.start();
 
