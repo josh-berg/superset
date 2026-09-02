@@ -5,7 +5,7 @@ import { promisify } from "node:util";
 import { getProcessTree } from "./port-scanner";
 
 const execAsync = promisify(exec);
-const SCAN_INTERVAL_MS = 2000;
+const SCAN_INTERVAL_MS = 5000;
 const EXEC_TIMEOUT_MS = 3000;
 
 interface DaemonSession {
@@ -67,6 +67,7 @@ class ClaudeDetector extends EventEmitter {
 
 	private async scanAllSessions(): Promise<void> {
 		if (this.isScanning) return;
+		if (this.sessions.size === 0) return;
 		this.isScanning = true;
 		try {
 			await Promise.all(

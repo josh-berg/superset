@@ -332,6 +332,18 @@ if (!gotTheLock) {
 				.protocol.handle("superset-font", fontProtocolHandler);
 		}
 
+		// Clear Chromium's HTTP+code cache on startup and every 24 h to prevent
+		// unbounded growth (observed reaching 1.6 GB after several days of use).
+		const clearSupersetCache = () =>
+			session
+				.fromPartition("persist:superset")
+				.clearCache()
+				.catch((err) => console.warn("[main] Cache clear failed:", err));
+
+		clearSupersetCache();
+		const cacheClearInterval = setInterval(clearSupersetCache, 24 * 60 * 60 * 1000);
+		cacheClearInterval.unref();
+
 		ensureProjectIconsDir();
 		setWorkspaceDockIcon();
 		initSentry();
