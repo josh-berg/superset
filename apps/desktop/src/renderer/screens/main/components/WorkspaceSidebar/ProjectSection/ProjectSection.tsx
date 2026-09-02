@@ -287,6 +287,48 @@ export function ProjectSection({
 		/>
 	) : null;
 
+	// Gitless projects always have one workspace — render it directly without
+	// the collapsible ProjectHeader wrapper.
+	if (isGitless && !isFeatureProject) {
+		const singleItem = topLevelChildren[0];
+		if (singleItem?.kind === "workspace") {
+			const item = singleItem;
+			return (
+				<>
+					<div
+						ref={projectHeaderRef}
+						className={cn(
+							isSidebarCollapsed
+								? "flex flex-col items-center py-2 border-b border-border last:border-b-0"
+								: "border-b border-border last:border-b-0",
+							isDragging && "opacity-30",
+							isDragging && "cursor-grabbing",
+						)}
+					>
+						<WorkspaceListItem
+							id={item.workspace.id}
+							projectId={item.workspace.projectId}
+							worktreePath={item.workspace.worktreePath}
+							name={projectName}
+							branch={item.workspace.branch}
+							type={item.workspace.type}
+							isUnread={item.workspace.isUnread}
+							isGitless={item.workspace.isGitless}
+							isFeatureProject={false}
+							index={item.topLevelIndex}
+							shortcutIndex={item.shortcutIndex}
+							isCollapsed={isSidebarCollapsed}
+							sectionId={null}
+							sections={sections}
+							orderedWorkspaceIds={orderedWorkspaceIds}
+						/>
+					</div>
+					{addRepoDialog}
+				</>
+			);
+		}
+	}
+
 	if (isSidebarCollapsed) {
 		return (
 			<>
