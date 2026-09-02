@@ -313,9 +313,6 @@ function ProjectPage() {
 				<div className="flex-1 flex items-center justify-center px-6 py-8">
 					<div className="w-full max-w-3xl space-y-6">
 						<div className="space-y-1.5">
-							<p className="text-xs uppercase tracking-wide text-muted-foreground">
-								Step {step === "workspace" ? 1 : 2} of 2
-							</p>
 							<h1 className="text-2xl font-semibold text-foreground">
 								{step === "workspace" && "Create your first worktree"}
 								{step === "setup" && "Setup script"}
@@ -362,7 +359,7 @@ function ProjectPage() {
 											onKeyDown={(e) => {
 												if (e.key === "Enter" && !e.shiftKey) {
 													e.preventDefault();
-													handleContinueToSetup();
+													handleCreateWorkspace();
 												}
 											}}
 										/>
@@ -502,10 +499,15 @@ function ProjectPage() {
 
 									<div className="flex justify-end">
 										<Button
-											onClick={handleContinueToSetup}
-											disabled={!canContinueFromWorkspace}
+											onClick={handleCreateWorkspace}
+											disabled={
+												!canContinueFromWorkspace ||
+												createWorkspace.isPending
+											}
 										>
-											Continue
+											{createWorkspace.isPending
+												? "Creating..."
+												: "Create worktree"}
 											<HiChevronRight className="size-4" />
 										</Button>
 									</div>
