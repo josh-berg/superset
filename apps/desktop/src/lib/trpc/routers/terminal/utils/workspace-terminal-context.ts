@@ -72,7 +72,9 @@ function loadWorkspaceTerminalContext(
 				? (row.mainRepoPath ?? undefined)
 				: (row.worktreePath ?? undefined),
 		rootPath: row.mainRepoPath ?? undefined,
-		branchName: row.workspace.branch || undefined,
+		branchName: row.featureProjectName && row.workspace.type === "branch"
+			? "root"
+			: row.workspace.branch || undefined,
 		repoName: row.mainRepoPath ? path.basename(row.mainRepoPath) : undefined,
 		projectName: row.projectName ?? undefined,
 		featureProjectName: row.featureProjectName ?? undefined,
