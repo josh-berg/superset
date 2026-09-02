@@ -197,6 +197,30 @@ export function resetTerminalInputModes(xterm: XTerm): void {
 	xterm.write(INPUT_MODE_RESET_SEQUENCE);
 }
 
+function parseOscFileUri(
+	uri: string,
+): { path: string; line?: number; column?: number } | null {
+	try {
+		const url = new URL(uri);
+		if (url.protocol !== "file:") return null;
+		const path = decodeURIComponent(url.pathname);
+		let line: number | undefined;
+		let column: number | undefined;
+		const fragment = url.hash.slice(1);
+		if (fragment) {
+			// VS Code / Claude Code format: L42 or L42C10 or L42,C10
+			const m = fragment.match(/^L(\d+)(?:[C,](\d+))?$/);
+			if (m) {
+				line = Number.parseInt(m[1], 10);
+				if (m[2]) column = Number.parseInt(m[2], 10);
+			}
+		}
+		return { path, line, column };
+	} catch {
+		return null;
+	}
+}
+
 export interface CreateTerminalOptions {
 	cwd?: string;
 	initialTheme?: ITheme | null;
@@ -231,7 +255,43 @@ export function createTerminalInstance(
 	// Use provided theme, or fall back to localStorage-based default to prevent flash
 	const theme = initialTheme ?? getDefaultTerminalTheme();
 	const terminalOptions = { ...TERMINAL_OPTIONS, theme };
-	const xterm = new XTerm(terminalOptions);
+	const xterm = new XTerm({
+		...terminalOptions,
+		linkHandler: {
+			// Allow file:// URIs — without this xterm.js silently ignores them.
+			allowNonHttpProtocols: true,
+			activate: (event: MouseEvent, uri: string) => {
+				if (!event.metaKey && !event.ctrlKey) return;
+				event.preventDefault();
+				if (uri.startsWith("file://")) {
+					const parsed = parseOscFileUri(uri);
+					if (!parsed) return;
+					if (onFileLinkClick) {
+						onFileLinkClick(parsed.path, parsed.line, parsed.column);
+					} else {
+						trpcClient.external.openFileInEditor
+							.mutate({ path: parsed.path, line: parsed.line, column: parsed.column, cwd })
+							.catch((error) => {
+								console.error("[Terminal] Failed to open OSC8 file link:", uri, error);
+							});
+					}
+				} else {
+					const handler = urlClickRef?.current;
+					if (handler) {
+						handler(uri);
+					} else {
+						trpcClient.external.openUrl.mutate(uri).catch((error) => {
+							console.error("[Terminal] Failed to open OSC8 URL:", uri, error);
+							toast.error("Failed to open URL", {
+								description:
+									error instanceof Error ? error.message : "Could not open URL in browser",
+							});
+						});
+					}
+				}
+			},
+		},
+	});
 	const fitAddon = new FitAddon();
 
 	const clipboardAddon = new ClipboardAddon();
