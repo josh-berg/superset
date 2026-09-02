@@ -851,7 +851,10 @@ export function useTerminalLifecycle({
 			reattachRecovery.pendingFrame = null;
 		};
 
-		registerRefreshCallbackRef.current(paneId, () => runReattachRecovery(true));
+		registerRefreshCallbackRef.current(paneId, () => {
+			rebuildRenderer();
+			runReattachRecovery(true);
+		});
 
 		// Switching workspaces/tabs unmounts and remounts the terminal (only the
 		// active tab is rendered), so on return xterm is re-created from scratch
@@ -892,11 +895,17 @@ export function useTerminalLifecycle({
 				mountRecoveryFrame = requestAnimationFrame(runMountRecovery);
 				return;
 			}
+			// Fit first so the WebGL canvas is built at the correct container dimensions,
+			// not at whatever stale cols/rows xterm had before layout settled.
+			fitAddon.fit();
 			rebuildRenderer();
 			runReattachRecovery(true);
 			mountRecoverySettle = setTimeout(() => {
 				mountRecoverySettle = null;
 				if (isUnmounted || xtermRef.current !== xterm) return;
+				// Rebuild again after Mosaic layout fully settles to catch any final size change.
+				fitAddon.fit();
+				rebuildRenderer();
 				runReattachRecovery(true);
 			}, RESIZE_DEBOUNCE_MS);
 		};

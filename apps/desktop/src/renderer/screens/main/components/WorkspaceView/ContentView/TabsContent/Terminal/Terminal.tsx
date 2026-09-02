@@ -448,6 +448,7 @@ export const Terminal = ({ paneId, tabId, workspaceId }: TerminalProps) => {
 			role="application"
 			className="relative h-full w-full overflow-hidden"
 			style={{ backgroundColor: terminalBg }}
+			onMouseDown={() => xtermRef.current?.focus()}
 			onDragOver={handleDragOver}
 			onDrop={handleDrop}
 		>
