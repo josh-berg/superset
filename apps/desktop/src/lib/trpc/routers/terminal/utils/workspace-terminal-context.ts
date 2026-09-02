@@ -1,3 +1,4 @@
+import path from "node:path";
 import {
 	projects,
 	type SelectWorkspace,
@@ -14,6 +15,9 @@ export interface WorkspaceTerminalContext {
 	workspace: SelectWorkspace | undefined;
 	workspacePath: string | undefined;
 	rootPath: string | undefined;
+	branchName: string | undefined;
+	repoName: string | undefined;
+	projectName: string | undefined;
 }
 
 interface WorkspaceTerminalContextCacheEntry {
@@ -33,6 +37,7 @@ function loadWorkspaceTerminalContext(
 		.select({
 			workspace: workspaces,
 			mainRepoPath: projects.mainRepoPath,
+			projectName: projects.name,
 			worktreePath: worktrees.path,
 		})
 		.from(workspaces)
@@ -46,6 +51,9 @@ function loadWorkspaceTerminalContext(
 			workspace: undefined,
 			workspacePath: undefined,
 			rootPath: undefined,
+			branchName: undefined,
+			repoName: undefined,
+			projectName: undefined,
 		};
 	}
 
@@ -56,6 +64,9 @@ function loadWorkspaceTerminalContext(
 				? (row.mainRepoPath ?? undefined)
 				: (row.worktreePath ?? undefined),
 		rootPath: row.mainRepoPath ?? undefined,
+		branchName: row.workspace.branch || undefined,
+		repoName: row.mainRepoPath ? path.basename(row.mainRepoPath) : undefined,
+		projectName: row.projectName ?? undefined,
 	};
 }
 

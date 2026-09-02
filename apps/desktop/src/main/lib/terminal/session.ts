@@ -87,6 +87,9 @@ export async function createSession(
 		workspaceName,
 		workspacePath,
 		rootPath,
+		branchName,
+		repoName,
+		projectName,
 		cwd,
 		cols,
 		rows,
@@ -119,6 +122,9 @@ export async function createSession(
 		workspaceName,
 		workspacePath,
 		rootPath,
+		branchName,
+		repoName,
+		projectName,
 		themeType,
 	});
 

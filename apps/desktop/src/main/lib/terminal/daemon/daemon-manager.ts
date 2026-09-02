@@ -382,6 +382,9 @@ export class DaemonTerminalManager extends EventEmitter {
 			workspaceName,
 			workspacePath,
 			rootPath,
+			branchName,
+			repoName,
+			projectName,
 			cwd,
 			cols = 80,
 			rows = 24,
@@ -450,6 +453,9 @@ export class DaemonTerminalManager extends EventEmitter {
 				workspaceName,
 				workspacePath,
 				rootPath,
+				branchName,
+				repoName,
+				projectName,
 				themeType,
 			});
 

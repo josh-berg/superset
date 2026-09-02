@@ -93,7 +93,7 @@ export const createTerminalRouter = () => {
 					themeType,
 				} = input;
 
-				const { workspace, workspacePath, rootPath } =
+				const { workspace, workspacePath, rootPath, branchName, repoName, projectName } =
 					getWorkspaceTerminalContext(workspaceId);
 				if (workspace?.type === "worktree") {
 					assertWorkspaceUsable(workspaceId, workspacePath);
@@ -127,6 +127,9 @@ export const createTerminalRouter = () => {
 						workspaceName: workspace?.name,
 						workspacePath,
 						rootPath,
+						branchName,
+						repoName,
+						projectName,
 						cwd,
 						cols,
 						rows,

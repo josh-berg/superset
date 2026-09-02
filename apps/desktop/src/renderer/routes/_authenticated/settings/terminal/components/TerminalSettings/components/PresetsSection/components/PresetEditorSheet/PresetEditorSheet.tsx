@@ -34,6 +34,7 @@ import { CommandsEditor } from "../../../PresetRow/components/CommandsEditor";
 import type { AutoApplyField } from "../../constants";
 import type { PresetProjectOption } from "../../preset-project-options";
 import { LabelWithTooltip } from "../LabelWithTooltip";
+import { EnvVarsReference } from "./components/EnvVarsReference";
 import { ProjectTargetingField } from "./components/ProjectTargetingField";
 
 interface PresetEditorSheetProps {
@@ -197,10 +198,13 @@ export function PresetEditorSheet({
 								</div>
 
 								<div className="space-y-2">
-									<LabelWithTooltip
-										label="Commands"
-										tooltip="Each row is one command. Add multiple commands to run a grouped preset."
-									/>
+									<div className="flex items-center justify-between">
+										<LabelWithTooltip
+											label="Commands"
+											tooltip="Each row is one command. Add multiple commands to run a grouped preset."
+										/>
+										<EnvVarsReference />
+									</div>
 									<CommandsEditor
 										commands={preset.commands}
 										onChange={onCommandsChange}

@@ -100,6 +100,9 @@ export interface CreateSessionParams {
 	workspaceName?: string;
 	workspacePath?: string;
 	rootPath?: string;
+	branchName?: string;
+	repoName?: string;
+	projectName?: string;
 	cwd?: string;
 	cols?: number;
 	rows?: number;
