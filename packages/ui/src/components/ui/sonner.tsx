@@ -28,11 +28,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
 				style: {
 					userSelect: "text",
 					WebkitUserSelect: "text",
-					maxHeight: "80dvh",
-					overflow: "hidden",
 				},
 				classNames: {
-					description: "overflow-y-auto",
+					description: "overflow-y-auto max-h-[60dvh]",
 				},
 			}}
 			style={
