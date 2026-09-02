@@ -49,7 +49,6 @@ import { execWithShellEnv } from "../workspaces/utils/shell-env";
 import { getAutoProjectAbbreviation } from "./utils/abbreviations/abbreviations";
 import { getAutoProjectColor } from "./utils/colors";
 import { discoverAndSaveProjectIcon } from "./utils/favicon-discovery";
-import { fetchGitHubOwner, getGitHubAvatarUrl } from "./utils/github";
 import { ensureGitlessWorkspace } from "./utils/workspace-bootstrap";
 
 type Project = SelectProject;
@@ -1909,56 +1908,6 @@ export const createProjectsRouter = (getWindow: () => BrowserWindow | null) => {
 				}
 
 				return { success: true, terminalWarning };
-			}),
-
-		getGitHubAvatar: publicProcedure
-			.input(z.object({ id: z.string() }))
-			.query(async ({ input }) => {
-				const project = localDb
-					.select()
-					.from(projects)
-					.where(eq(projects.id, input.id))
-					.get();
-
-				if (!project) {
-					console.log("[getGitHubAvatar] Project not found:", input.id);
-					return null;
-				}
-
-				if (project.githubOwner) {
-					console.log(
-						"[getGitHubAvatar] Using cached owner:",
-						project.githubOwner,
-					);
-					return {
-						owner: project.githubOwner,
-						avatarUrl: getGitHubAvatarUrl(project.githubOwner),
-					};
-				}
-
-				console.log(
-					"[getGitHubAvatar] Fetching owner for:",
-					project.mainRepoPath,
-				);
-				const owner = await fetchGitHubOwner(project.mainRepoPath);
-
-				if (!owner) {
-					console.log("[getGitHubAvatar] Failed to fetch owner");
-					return null;
-				}
-
-				console.log("[getGitHubAvatar] Fetched owner:", owner);
-
-				localDb
-					.update(projects)
-					.set({ githubOwner: owner })
-					.where(eq(projects.id, input.id))
-					.run();
-
-				return {
-					owner,
-					avatarUrl: getGitHubAvatarUrl(owner),
-				};
 			}),
 
 		getGitAuthor: publicProcedure

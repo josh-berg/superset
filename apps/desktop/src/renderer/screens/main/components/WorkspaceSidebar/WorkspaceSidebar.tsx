@@ -199,7 +199,7 @@ export function WorkspaceSidebar({
 										projectId={group.project.id}
 										projectName={group.project.name}
 										projectColor={group.project.color}
-										githubOwner={group.project.githubOwner}
+	
 										mainRepoPath={group.project.mainRepoPath}
 										hideImage={group.project.hideImage}
 										iconUrl={group.project.iconUrl}

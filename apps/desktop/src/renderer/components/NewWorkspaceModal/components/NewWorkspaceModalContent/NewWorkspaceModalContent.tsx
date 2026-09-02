@@ -334,7 +334,7 @@ export function NewWorkspaceModalContent({
 											projectId={project.id}
 											projectName={project.name}
 											projectColor={project.color}
-											githubOwner={project.githubOwner}
+		
 											iconUrl={project.iconUrl}
 											iconLetter={project.iconLetter}
 											hideImage={project.hideImage ?? false}
@@ -475,7 +475,7 @@ export function NewWorkspaceModalContent({
 						projectId={selectedProject.id}
 						projectName={selectedProject.name}
 						projectColor={selectedProject.color}
-						githubOwner={selectedProject.githubOwner}
+
 						iconUrl={selectedProject.iconUrl}
 						iconLetter={selectedProject.iconLetter}
 						hideImage={selectedProject.hideImage ?? false}

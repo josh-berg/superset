@@ -186,7 +186,6 @@ function ProjectPickerPill({
 							projectId={selectedProject.id}
 							projectName={selectedProject.name}
 							projectColor={selectedProject.color}
-							githubOwner={selectedProject.githubOwner}
 							iconUrl={selectedProject.iconUrl}
 							iconLetter={selectedProject.iconLetter}
 							hideImage={selectedProject.hideImage ?? false}
@@ -218,7 +217,6 @@ function ProjectPickerPill({
 										projectId={project.id}
 										projectName={project.name}
 										projectColor={project.color}
-										githubOwner={project.githubOwner}
 										iconUrl={project.iconUrl}
 										iconLetter={project.iconLetter}
 										hideImage={project.hideImage ?? false}

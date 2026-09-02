@@ -42,7 +42,6 @@ interface ProjectHeaderProps {
 	projectId: string;
 	projectName: string;
 	projectColor: string;
-	githubOwner: string | null;
 	mainRepoPath: string;
 	hideImage: boolean;
 	iconUrl: string | null;
@@ -71,7 +70,6 @@ export function ProjectHeader({
 	projectId,
 	projectName,
 	projectColor,
-	githubOwner,
 	mainRepoPath,
 	hideImage,
 	iconUrl,
@@ -262,7 +260,7 @@ export function ProjectHeader({
 										projectId={projectId}
 										projectName={projectName}
 										projectColor={projectColor}
-										githubOwner={githubOwner}
+	
 										iconUrl={iconUrl}
 										iconLetter={iconLetter}
 										hideImage={hideImage}
@@ -355,7 +353,6 @@ export function ProjectHeader({
 						projectId={projectId}
 						projectName={projectName}
 						projectColor={projectColor}
-						githubOwner={githubOwner}
 						hideImage={hideImage}
 						iconUrl={iconUrl}
 						iconLetter={iconLetter}
@@ -384,7 +381,7 @@ export function ProjectHeader({
 									projectId={projectId}
 									projectName={projectName}
 									projectColor={projectColor}
-									githubOwner={githubOwner}
+
 									hideImage={hideImage}
 									iconUrl={iconUrl}
 									iconLetter={iconLetter}
@@ -409,7 +406,7 @@ export function ProjectHeader({
 									projectId={projectId}
 									projectName={projectName}
 									projectColor={projectColor}
-									githubOwner={githubOwner}
+
 									hideImage={hideImage}
 									iconUrl={iconUrl}
 									iconLetter={iconLetter}
