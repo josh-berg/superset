@@ -78,12 +78,12 @@ export function getHighestPriorityStatus(
  * (e.g. clicking a tab, focusing a pane, selecting a workspace).
  *
  * - "review"     → "idle"    (user saw the completion)
- * - "permission" → unchanged (persists until agent resumes)
+ * - "permission" → "idle"    (user navigated to the workspace; dot served its purpose)
  * - "working"    → unchanged (persists until agent stops)
  * - "idle"       → unchanged
  */
 export function acknowledgedStatus(status: PaneStatus | undefined): PaneStatus {
-	if (status === "review") return "idle";
+	if (status === "review" || status === "permission") return "idle";
 	return status ?? "idle";
 }
 

@@ -46,13 +46,14 @@ fi
 # The server will ignore requests with missing eventType (forward compatibility).
 
 # Sub-agent guard: track the main session per pane via UserPromptSubmit, then
-# skip Stop notifications from sub-agents that have a different session ID.
-# UserPromptSubmit only fires for the user-invoked (main) agent, not sub-agents.
+# skip Stop and PermissionRequest notifications from sub-agents that have a
+# different session ID. UserPromptSubmit only fires for the user-invoked (main)
+# agent, not sub-agents.
 if [ -n "$SUPERSET_PANE_ID" ]; then
   _MAIN_SESSION_FILE="/tmp/.superset-main-session-${SUPERSET_PANE_ID}"
   if [ "$EVENT_TYPE" = "UserPromptSubmit" ] && [ -n "$HOOK_SESSION_ID" ]; then
     echo "$HOOK_SESSION_ID" > "$_MAIN_SESSION_FILE"
-  elif [ "$EVENT_TYPE" = "Stop" ] && [ -n "$HOOK_SESSION_ID" ] && [ -f "$_MAIN_SESSION_FILE" ]; then
+  elif { [ "$EVENT_TYPE" = "Stop" ] || [ "$EVENT_TYPE" = "PermissionRequest" ]; } && [ -n "$HOOK_SESSION_ID" ] && [ -f "$_MAIN_SESSION_FILE" ]; then
     _RECORDED_SESSION=$(cat "$_MAIN_SESSION_FILE")
     if [ -n "$_RECORDED_SESSION" ] && [ "$HOOK_SESSION_ID" != "$_RECORDED_SESSION" ]; then
       exit 0
