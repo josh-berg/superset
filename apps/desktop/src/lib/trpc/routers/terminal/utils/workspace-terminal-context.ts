@@ -6,6 +6,7 @@ import {
 	worktrees,
 } from "@superset/local-db";
 import { eq } from "drizzle-orm";
+import { alias } from "drizzle-orm/sqlite-core";
 import { localDb } from "main/lib/local-db";
 
 const WORKSPACE_TERMINAL_CONTEXT_CACHE_TTL_MS = 500;
@@ -18,6 +19,7 @@ export interface WorkspaceTerminalContext {
 	branchName: string | undefined;
 	repoName: string | undefined;
 	projectName: string | undefined;
+	featureProjectName: string | undefined;
 }
 
 interface WorkspaceTerminalContextCacheEntry {
@@ -30,6 +32,8 @@ const workspaceTerminalContextCache = new Map<
 	WorkspaceTerminalContextCacheEntry
 >();
 
+const parentProjects = alias(projects, "parent_projects");
+
 function loadWorkspaceTerminalContext(
 	workspaceId: string,
 ): WorkspaceTerminalContext {
@@ -38,10 +42,13 @@ function loadWorkspaceTerminalContext(
 			workspace: workspaces,
 			mainRepoPath: projects.mainRepoPath,
 			projectName: projects.name,
+			parentProjectId: projects.parentProjectId,
+			featureProjectName: parentProjects.name,
 			worktreePath: worktrees.path,
 		})
 		.from(workspaces)
 		.leftJoin(projects, eq(projects.id, workspaces.projectId))
+		.leftJoin(parentProjects, eq(parentProjects.id, projects.parentProjectId))
 		.leftJoin(worktrees, eq(worktrees.id, workspaces.worktreeId))
 		.where(eq(workspaces.id, workspaceId))
 		.get();
@@ -54,6 +61,7 @@ function loadWorkspaceTerminalContext(
 			branchName: undefined,
 			repoName: undefined,
 			projectName: undefined,
+			featureProjectName: undefined,
 		};
 	}
 
@@ -67,6 +75,7 @@ function loadWorkspaceTerminalContext(
 		branchName: row.workspace.branch || undefined,
 		repoName: row.mainRepoPath ? path.basename(row.mainRepoPath) : undefined,
 		projectName: row.projectName ?? undefined,
+		featureProjectName: row.featureProjectName ?? undefined,
 	};
 }
 

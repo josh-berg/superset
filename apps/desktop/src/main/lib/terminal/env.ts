@@ -455,6 +455,7 @@ export function buildTerminalEnv(params: {
 	branchName?: string;
 	repoName?: string;
 	projectName?: string;
+	featureProjectName?: string;
 	themeType?: "dark" | "light";
 }): Record<string, string> {
 	const {
@@ -468,6 +469,7 @@ export function buildTerminalEnv(params: {
 		branchName,
 		repoName,
 		projectName,
+		featureProjectName,
 		themeType,
 	} = params;
 
@@ -500,6 +502,7 @@ export function buildTerminalEnv(params: {
 		SUPERSET_BRANCH_NAME: branchName || "",
 		SUPERSET_REPO_NAME: repoName || "",
 		SUPERSET_PROJECT_NAME: projectName || "",
+		SUPERSET_FEATURE_PROJECT_NAME: featureProjectName || "",
 		// Use the actual bound port so hooks reach the server even after a
 		// startup port-fallback (see runtimeNotificationPort).
 		SUPERSET_PORT: String(runtimeNotificationPort),

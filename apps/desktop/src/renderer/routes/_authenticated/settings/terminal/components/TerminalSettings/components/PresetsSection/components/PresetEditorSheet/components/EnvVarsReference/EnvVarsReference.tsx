@@ -33,9 +33,14 @@ const WORKSPACE_VARS: EnvVar[] = [
 		example: "my-repo",
 	},
 	{
+		name: "SUPERSET_FEATURE_PROJECT_NAME",
+		description: "Feature project name (multi-repo container), if set",
+		example: "My Feature",
+	},
+	{
 		name: "SUPERSET_PROJECT_NAME",
-		description: "Project name",
-		example: "My Project",
+		description: "Single-repo project name",
+		example: "my-repo",
 	},
 	{
 		name: "SUPERSET_WORKSPACE_PATH",

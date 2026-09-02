@@ -103,6 +103,7 @@ export interface CreateSessionParams {
 	branchName?: string;
 	repoName?: string;
 	projectName?: string;
+	featureProjectName?: string;
 	cwd?: string;
 	cols?: number;
 	rows?: number;

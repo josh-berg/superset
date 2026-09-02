@@ -385,6 +385,7 @@ export class DaemonTerminalManager extends EventEmitter {
 			branchName,
 			repoName,
 			projectName,
+			featureProjectName,
 			cwd,
 			cols = 80,
 			rows = 24,
@@ -456,6 +457,7 @@ export class DaemonTerminalManager extends EventEmitter {
 				branchName,
 				repoName,
 				projectName,
+				featureProjectName,
 				themeType,
 			});
 

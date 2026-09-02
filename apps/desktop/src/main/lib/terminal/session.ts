@@ -90,6 +90,7 @@ export async function createSession(
 		branchName,
 		repoName,
 		projectName,
+		featureProjectName,
 		cwd,
 		cols,
 		rows,
@@ -125,6 +126,7 @@ export async function createSession(
 		branchName,
 		repoName,
 		projectName,
+		featureProjectName,
 		themeType,
 	});
 
