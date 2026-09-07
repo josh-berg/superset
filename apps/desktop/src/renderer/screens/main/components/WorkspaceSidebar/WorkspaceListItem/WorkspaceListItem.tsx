@@ -441,7 +441,7 @@ export function WorkspaceListItem({
 												⌘{shortcutIndex + 1}
 											</span>
 										)}
-									{!isBranchWorkspace && (
+									{(!isBranchWorkspace || isGitless) && (
 										<Tooltip delayDuration={300}>
 											<TooltipTrigger asChild>
 												<button
@@ -451,14 +451,14 @@ export function WorkspaceListItem({
 														handleDeleteClick();
 													}}
 													className="flex items-center justify-center text-muted-foreground hover:text-foreground"
-													aria-label="Close worktree"
+													aria-label={isGitless ? "Close workspace" : "Close worktree"}
 												>
 													<HiMiniXMark className="size-3.5" />
 												</button>
 											</TooltipTrigger>
 											<TooltipContent side="top" sideOffset={4}>
 												<HotkeyLabel
-													label="Close worktree"
+													label={isGitless ? "Close workspace" : "Close worktree"}
 													id={isActive ? "CLOSE_WORKSPACE" : undefined}
 												/>
 											</TooltipContent>
@@ -507,6 +507,7 @@ export function WorkspaceListItem({
 				name={name}
 				worktreePath={worktreePath}
 				isBranchWorkspace={isBranchWorkspace}
+				isGitless={isGitless}
 				isUnread={isUnread}
 				workspaceStatus={workspaceStatus}
 				sections={sections}
@@ -525,6 +526,7 @@ export function WorkspaceListItem({
 				workspaceId={id}
 				workspaceName={name}
 				workspaceType={type}
+				isGitless={isGitless}
 				open={showDeleteDialog}
 				onOpenChange={setShowDeleteDialog}
 			/>

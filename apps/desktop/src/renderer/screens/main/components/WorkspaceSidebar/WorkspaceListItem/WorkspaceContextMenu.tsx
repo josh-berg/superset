@@ -44,6 +44,7 @@ interface WorkspaceContextMenuProps {
 	name: string;
 	worktreePath: string;
 	isBranchWorkspace: boolean;
+	isGitless: boolean;
 	isUnread: boolean;
 	workspaceStatus: string | null | undefined;
 	sections: { id: string; name: string }[];
@@ -64,6 +65,7 @@ export function WorkspaceContextMenu({
 	name,
 	worktreePath,
 	isBranchWorkspace,
+	isGitless,
 	isUnread,
 	workspaceStatus,
 	sections,
@@ -198,7 +200,7 @@ export function WorkspaceContextMenu({
 					Clear Status
 				</ContextMenuItem>
 			)}
-			{!isBranchWorkspace && (
+			{(!isBranchWorkspace || isGitless) && (
 				<>
 					<ContextMenuSeparator />
 					<ContextMenuItem
@@ -207,7 +209,7 @@ export function WorkspaceContextMenu({
 						}}
 					>
 						<LuX className="size-4 mr-2" strokeWidth={STROKE_WIDTH} />
-						Close Worktree
+						{isGitless ? "Close Workspace" : "Close Worktree"}
 					</ContextMenuItem>
 				</>
 			)}

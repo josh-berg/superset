@@ -27,6 +27,7 @@ interface DeleteWorkspaceDialogProps {
 	workspaceId: string;
 	workspaceName: string;
 	workspaceType?: "worktree" | "branch";
+	isGitless?: boolean;
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 }
@@ -35,6 +36,7 @@ export function DeleteWorkspaceDialog({
 	workspaceId,
 	workspaceName,
 	workspaceType = "worktree",
+	isGitless = false,
 	open,
 	onOpenChange,
 }: DeleteWorkspaceDialogProps) {
@@ -196,8 +198,9 @@ export function DeleteWorkspaceDialog({
 						<AlertDialogDescription asChild>
 							<div className="text-muted-foreground space-y-1.5">
 								<span className="block">
-									This will close the workspace and kill any active terminals.
-									Your branch and commits will remain in the repository.
+									{isGitless
+										? "This will close the workspace and kill any active terminals. Your files will remain on disk."
+										: "This will close the workspace and kill any active terminals. Your branch and commits will remain in the repository."}
 								</span>
 							</div>
 						</AlertDialogDescription>
